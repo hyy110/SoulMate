@@ -82,11 +82,70 @@
 - Alembic 缺少 script.py.mako 模板文件
 - 自动生成的迁移脚本引用 app.models.types 但未 import，手动修复
 
+---
+
+## 会话 3 — 用户认证前端实现（端到端）(2026-02-26)
+
+### 用户故事：用户注册与登录（全栈）
+
+### 本次完成的工作
+
+1. **前端 API 层修正**
+   - 修复 `api/auth.ts` 类型定义匹配后端 AuthResponse（user + tokens 结构）
+   - 更新 `stores/authStore.ts` 适配新响应结构，增加 initialize 方法
+
+2. **登录页面实现 (`pages/Login.tsx`)**
+   - 表单：用户名 + 密码输入
+   - 验证：空值检查
+   - API 调用：连接后端 /api/auth/login
+   - 错误处理：显示后端返回的错误信息（toast）
+   - 成功后跳转首页
+   - 加载状态：loading spinner
+
+3. **注册页面实现 (`pages/Register.tsx`)**
+   - 表单：用户名 + 邮箱 + 昵称 + 密码 + 确认密码
+   - 前端验证：用户名长度、邮箱格式、密码长度、密码一致性
+   - API 调用：连接后端 /api/auth/register
+   - 错误处理：显示重复用户名/邮箱等错误
+   - 成功后 toast + 跳转首页
+
+4. **认证守卫 (`components/AuthGuard.tsx`)**
+   - 未登录用户访问受保护页面自动跳转到 /login
+   - 页面加载时自动初始化认证状态（从 localStorage 恢复 token）
+   - 加载中显示 spinner
+
+5. **路由更新 (`router.tsx`)**
+   - /login 和 /register 为公开路由
+   - 所有其他路由包裹在 AuthGuard 中
+
+6. **主布局更新 (`components/Layout/MainLayout.tsx`)**
+   - 顶部导航栏显示用户头像（首字母）和昵称
+   - 退出按钮：清除 token 并跳转到 /login
+   - 侧边栏底部显示用户信息（头像、昵称、邮箱）
+
+7. **首页更新 (`pages/Home.tsx`)**
+   - 个性化欢迎语：显示用户昵称
+   - 快捷操作卡片：创建角色、探索角色、个人中心
+   - 我的角色和最近对话占位区域
+
+### 功能通过情况
+- 15/210 tests passing（新增 5 个）
+- Feature: React 前端启动 ✓
+- Feature: 前端路由 ✓
+- Feature: 用户注册页面 ✓
+- Feature: 用户登录页面 ✓
+- Feature: 登录/注册页面样式 ✓
+
+### 发现并修复的问题
+- 前端 auth.ts 类型与后端 AuthResponse 不匹配（后端返回 {user, tokens}，前端原来期望扁平结构）
+- authStore 中 register 方法原来解构 tokens 字段不正确
+
 ### 下次应该做什么
-1. 实现上传用户头像功能（Feature #11）—— 需要文件存储方案（本地存储或 MinIO）
-2. 实现角色 CRUD API（Feature #12-18）
-3. 实现前端启动和基础路由（Feature #80-81）
-4. 考虑安装 Visual C++ Build Tools 以启用 ChromaDB
+1. 实现角色 CRUD 用户故事（后端 API + 前端页面）
+   - 后端：POST/GET/PUT/DELETE /api/characters
+   - 前端：角色创建页面、角色列表、角色详情、角色编辑
+2. 实现上传头像功能（需要文件存储方案）
+3. 首页对接真实数据：我的角色列表、最近对话
 
 ### 当前进度
-10/210 tests passing
+15/210 tests passing

@@ -838,7 +838,7 @@
       "步骤 3: 访问 http://localhost:5173",
       "步骤 4: 验证页面正常渲染，无控制台错误"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -852,7 +852,7 @@
       "步骤 6: 验证所有页面正常渲染",
       "步骤 7: 验证未登录时重定向到登录页"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -864,7 +864,7 @@
       "步骤 4: 验证注册成功后跳转到首页",
       "步骤 5: 验证导航栏显示用户信息"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -876,7 +876,7 @@
       "步骤 4: 验证登录成功跳转到首页",
       "步骤 5: 刷新页面验证登录状态持久化（Token 存储）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1956,7 +1956,7 @@
       "步骤 4: 验证输入框、按钮样式统一",
       "步骤 5: 验证注册页面样式与登录一致"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
