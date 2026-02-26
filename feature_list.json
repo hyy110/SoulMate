@@ -1,0 +1,2608 @@
+[
+  {
+    "category": "functional",
+    "description": "FastAPI 后端服务启动：运行 uvicorn 启动 FastAPI 应用，访问 /docs 能看到 Swagger 文档",
+    "steps": [
+      "步骤 1: 进入 backend 目录",
+      "步骤 2: 运行 uvicorn app.main:app --reload",
+      "步骤 3: 访问 http://localhost:8000/docs",
+      "步骤 4: 验证 Swagger UI 正常显示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "健康检查接口：GET /api/health 返回 200 和服务状态信息",
+    "steps": [
+      "步骤 1: 启动后端服务",
+      "步骤 2: GET /api/health",
+      "步骤 3: 验证返回 200 和 {status: 'ok'}"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "数据库连接与迁移：Alembic 迁移脚本可正常执行，所有表结构正确创建",
+    "steps": [
+      "步骤 1: 配置 DATABASE_URL 环境变量",
+      "步骤 2: 运行 alembic upgrade head",
+      "步骤 3: 验证所有表已创建（users, characters, voice_profiles, conversations, messages, knowledge_bases, documents, tools, user_actions, favorites, tags）",
+      "步骤 4: 验证外键关系正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "用户注册：POST /api/auth/register 创建新用户，返回用户信息和 JWT",
+    "steps": [
+      "步骤 1: POST /api/auth/register，body: {username, email, password, nickname}",
+      "步骤 2: 验证返回 201 和用户信息（不含 password_hash）",
+      "步骤 3: 验证返回 JWT access_token",
+      "步骤 4: 验证数据库中用户已创建且密码已哈希"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "用户注册校验：重复用户名或邮箱注册返回 400 错误",
+    "steps": [
+      "步骤 1: 注册用户 A (username: testuser, email: test@test.com)",
+      "步骤 2: 再次注册相同 username，验证返回 400",
+      "步骤 3: 再次注册相同 email，验证返回 400",
+      "步骤 4: 验证错误信息明确提示重复字段"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "用户登录：POST /api/auth/login 使用正确凭据返回 JWT",
+    "steps": [
+      "步骤 1: 先注册一个用户",
+      "步骤 2: POST /api/auth/login，body: {username, password}",
+      "步骤 3: 验证返回 200 和有效的 JWT access_token",
+      "步骤 4: 用错误密码登录，验证返回 401"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "JWT Token 认证：携带有效 Token 访问受保护接口成功，无 Token 或过期 Token 返回 401",
+    "steps": [
+      "步骤 1: 登录获取 JWT",
+      "步骤 2: 携带 Token 访问 GET /api/auth/me，验证返回 200 和用户信息",
+      "步骤 3: 不携带 Token 访问同一接口，验证返回 401",
+      "步骤 4: 携带无效 Token 访问，验证返回 401"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Token 刷新：POST /api/auth/refresh 使用 refresh_token 获取新的 access_token",
+    "steps": [
+      "步骤 1: 登录获取 access_token 和 refresh_token",
+      "步骤 2: POST /api/auth/refresh，body: {refresh_token}",
+      "步骤 3: 验证返回新的 access_token",
+      "步骤 4: 验证新 Token 可正常访问受保护接口"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "更新用户资料：PUT /api/auth/me 更新昵称、简介、头像等信息",
+    "steps": [
+      "步骤 1: 登录获取 Token",
+      "步骤 2: PUT /api/auth/me，body: {nickname: '新昵称', bio: '新简介'}",
+      "步骤 3: 验证返回 200 和更新后的用户信息",
+      "步骤 4: GET /api/auth/me 验证信息已持久化"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "修改密码：PUT /api/auth/me/password 需要旧密码验证",
+    "steps": [
+      "步骤 1: 登录获取 Token",
+      "步骤 2: PUT /api/auth/me/password，body: {old_password: 'wrong', new_password: '...'}，验证返回 400",
+      "步骤 3: PUT /api/auth/me/password，body: {old_password: '正确', new_password: '新密码'}，验证返回 200",
+      "步骤 4: 用新密码重新登录，验证成功"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "上传用户头像：POST /api/auth/me/avatar 上传图片文件并返回 URL",
+    "steps": [
+      "步骤 1: 登录获取 Token",
+      "步骤 2: POST /api/auth/me/avatar，上传 jpg/png 文件",
+      "步骤 3: 验证返回 200 和 avatar_url",
+      "步骤 4: 访问 avatar_url 验证图片可访问",
+      "步骤 5: GET /api/auth/me 验证 avatar_url 已更新"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "创建角色：POST /api/characters 创建新的虚拟角色",
+    "steps": [
+      "步骤 1: 登录获取 Token",
+      "步骤 2: POST /api/characters，body: {name, gender, relationship_type, personality, backstory, greeting_message}",
+      "步骤 3: 验证返回 201 和角色详情",
+      "步骤 4: 验证 creator_id 为当前用户",
+      "步骤 5: 验证默认 status 为 draft"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "获取我的角色列表：GET /api/characters 返回当前用户创建的角色，支持分页",
+    "steps": [
+      "步骤 1: 创建 3 个角色",
+      "步骤 2: GET /api/characters?page=1&page_size=2",
+      "步骤 3: 验证返回 2 个角色和分页信息（total=3, pages=2）",
+      "步骤 4: GET /api/characters?page=2&page_size=2，验证返回 1 个角色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "获取角色详情：GET /api/characters/:id 返回角色完整信息",
+    "steps": [
+      "步骤 1: 创建一个角色",
+      "步骤 2: GET /api/characters/:id",
+      "步骤 3: 验证返回所有字段（name, gender, personality, backstory, tags, voice_id 等）",
+      "步骤 4: 访问不存在的 id，验证返回 404"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "更新角色：PUT /api/characters/:id 修改角色信息",
+    "steps": [
+      "步骤 1: 创建角色",
+      "步骤 2: PUT /api/characters/:id，body: {name: '新名字', personality: '新性格'}",
+      "步骤 3: 验证返回 200 和更新后的数据",
+      "步骤 4: 验证其他用户无法修改该角色（返回 403）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "删除角色：DELETE /api/characters/:id 删除角色及关联数据",
+    "steps": [
+      "步骤 1: 创建角色并与之创建一个对话",
+      "步骤 2: DELETE /api/characters/:id",
+      "步骤 3: 验证返回 200",
+      "步骤 4: GET /api/characters/:id 验证返回 404",
+      "步骤 5: 验证关联的对话也被清理"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色头像和封面图上传：创建/编辑角色时可上传头像和封面图",
+    "steps": [
+      "步骤 1: POST /api/characters，附带 avatar 和 cover_image 文件",
+      "步骤 2: 验证返回 avatar_url 和 cover_image_url",
+      "步骤 3: 访问 URL 验证图片可访问",
+      "步骤 4: PUT /api/characters/:id 更新图片，验证 URL 更新"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色标签管理：创建角色时设置标签，支持最多 5 个标签",
+    "steps": [
+      "步骤 1: 创建角色 tags: ['温柔', '可爱', '治愈']",
+      "步骤 2: 验证返回的 tags 正确",
+      "步骤 3: 更新角色设置 6 个标签，验证返回错误",
+      "步骤 4: 更新为 5 个标签，验证成功"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色系统提示词设置：角色的 system_prompt 支持设置和修改",
+    "steps": [
+      "步骤 1: 创建角色带 system_prompt",
+      "步骤 2: 验证 system_prompt 保存正确",
+      "步骤 3: 修改 system_prompt，验证更新成功",
+      "步骤 4: 验证 system_prompt 在对话时被正确注入（通过对话测试）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色开场白：设置 greeting_message，创建新对话时自动发送开场白",
+    "steps": [
+      "步骤 1: 创建角色设置 greeting_message: '你好呀，我是小雪~'",
+      "步骤 2: 创建与该角色的新对话",
+      "步骤 3: 获取对话消息列表",
+      "步骤 4: 验证第一条消息为角色的开场白"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发布角色：POST /api/characters/:id/publish 将角色状态改为 published，使其在社区可见",
+    "steps": [
+      "步骤 1: 创建一个 draft 状态的角色",
+      "步骤 2: POST /api/characters/:id/publish",
+      "步骤 3: 验证角色 status 变为 published",
+      "步骤 4: 验证该角色出现在 GET /api/explore 的结果中"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "取消发布角色：已发布角色可以取消发布，从社区隐藏",
+    "steps": [
+      "步骤 1: 发布一个角色",
+      "步骤 2: POST /api/characters/:id/publish（toggle 取消发布）",
+      "步骤 3: 验证角色 status 变回 draft",
+      "步骤 4: 验证该角色不再出现在发现页"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "克隆角色：POST /api/characters/:id/clone 克隆他人公开角色到自己名下",
+    "steps": [
+      "步骤 1: 用户 A 创建并发布角色",
+      "步骤 2: 用户 B 登录",
+      "步骤 3: POST /api/characters/:id/clone",
+      "步骤 4: 验证用户 B 名下多了一个角色，属性与原角色一致",
+      "步骤 5: 验证新角色的 creator_id 为用户 B",
+      "步骤 6: 验证新角色默认为 draft 状态"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色统计数据：GET /api/characters/:id/stats 返回点赞数、对话数、分享数",
+    "steps": [
+      "步骤 1: 创建并发布角色",
+      "步骤 2: 模拟点赞和创建对话",
+      "步骤 3: GET /api/characters/:id/stats",
+      "步骤 4: 验证统计数据正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "性格模板系统：提供预设性格模板列表，用户可快速选择填充",
+    "steps": [
+      "步骤 1: GET /api/characters/personality-templates",
+      "步骤 2: 验证返回模板列表（温柔体贴型、活泼开朗型、高冷傲娇型等）",
+      "步骤 3: 每个模板包含 name、description、personality_text、sample_dialogues"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发现页浏览：GET /api/explore 返回公开角色列表，支持分页和排序",
+    "steps": [
+      "步骤 1: 创建并发布多个角色",
+      "步骤 2: GET /api/explore?page=1&page_size=10",
+      "步骤 3: 验证只返回 published 状态的角色",
+      "步骤 4: 验证返回分页信息",
+      "步骤 5: GET /api/explore?sort=popular，验证按热度排序"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "热门角色排行：GET /api/explore/trending 返回按综合热度排名的角色",
+    "steps": [
+      "步骤 1: 创建并发布多个角色，模拟不同的点赞和对话数",
+      "步骤 2: GET /api/explore/trending",
+      "步骤 3: 验证结果按热度降序排列"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "最新角色：GET /api/explore/newest 返回按创建时间排序的最新角色",
+    "steps": [
+      "步骤 1: 依次创建并发布角色 A、B、C",
+      "步骤 2: GET /api/explore/newest",
+      "步骤 3: 验证结果顺序为 C、B、A"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "按标签筛选角色：GET /api/explore/tags/:tag 返回包含指定标签的角色",
+    "steps": [
+      "步骤 1: 创建角色 A (tags: ['温柔', '治愈']), 角色 B (tags: ['活泼'])",
+      "步骤 2: GET /api/explore/tags/温柔",
+      "步骤 3: 验证只返回角色 A",
+      "步骤 4: GET /api/explore/tags 获取热门标签列表"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "搜索角色：GET /api/explore/search?q=keyword 按关键词搜索角色名称和简介",
+    "steps": [
+      "步骤 1: 创建角色 '小雪'（简介含'温柔'）和 '小明'（简介含'开朗'）",
+      "步骤 2: GET /api/explore/search?q=温柔",
+      "步骤 3: 验证返回包含小雪",
+      "步骤 4: GET /api/explore/search?q=小，验证返回两个角色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "点赞角色：POST /api/characters/:id/like 和 DELETE /api/characters/:id/like",
+    "steps": [
+      "步骤 1: 发布一个角色",
+      "步骤 2: 另一用户 POST /api/characters/:id/like",
+      "步骤 3: 验证角色 like_count 增加 1",
+      "步骤 4: 重复点赞，验证不会重复增加",
+      "步骤 5: DELETE /api/characters/:id/like 取消点赞",
+      "步骤 6: 验证 like_count 减少 1"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "查看他人主页：GET /api/users/:id/characters 返回指定用户的公开角色",
+    "steps": [
+      "步骤 1: 用户 A 创建 2 个公开角色和 1 个草稿角色",
+      "步骤 2: 用户 B 访问 GET /api/users/:userId/characters",
+      "步骤 3: 验证只返回 2 个公开角色",
+      "步骤 4: 验证不返回草稿角色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "创建对话：POST /api/conversations 指定角色创建新对话",
+    "steps": [
+      "步骤 1: 创建一个角色",
+      "步骤 2: POST /api/conversations，body: {character_id}",
+      "步骤 3: 验证返回对话详情包含 id, character_id, title",
+      "步骤 4: 验证对话的 conversation_mode 默认为 text"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "获取对话列表：GET /api/conversations 返回当前用户的对话列表",
+    "steps": [
+      "步骤 1: 创建 3 个不同角色的对话",
+      "步骤 2: GET /api/conversations",
+      "步骤 3: 验证返回 3 个对话",
+      "步骤 4: 验证按 last_message_at 降序排列"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "对话操作：更新标题、置顶、归档",
+    "steps": [
+      "步骤 1: 创建对话",
+      "步骤 2: PUT /api/conversations/:id，body: {title: '新标题'}，验证标题更新",
+      "步骤 3: PUT /api/conversations/:id，body: {is_pinned: true}，验证置顶",
+      "步骤 4: PUT /api/conversations/:id，body: {is_archived: true}，验证归档",
+      "步骤 5: 获取对话列表，验证置顶对话排在最前"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "删除对话：DELETE /api/conversations/:id 删除对话及其消息",
+    "steps": [
+      "步骤 1: 创建对话并发送几条消息",
+      "步骤 2: DELETE /api/conversations/:id",
+      "步骤 3: 验证返回 200",
+      "步骤 4: GET /api/conversations/:id 验证返回 404",
+      "步骤 5: 验证关联消息已被删除"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发送文字消息：POST /api/conversations/:id/messages 发送消息并获取 AI 回复",
+    "steps": [
+      "步骤 1: 创建角色和对话",
+      "步骤 2: POST /api/conversations/:id/messages，body: {content: '你好'}",
+      "步骤 3: 验证 SSE 流式返回 AI 回复",
+      "步骤 4: 验证回复内容符合角色性格",
+      "步骤 5: GET /api/conversations/:id/messages 验证消息已持久化（用户消息 + AI 回复）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "流式响应（SSE）：AI 回复通过 Server-Sent Events 逐字推送",
+    "steps": [
+      "步骤 1: 发送消息到对话",
+      "步骤 2: 监听 SSE 事件流",
+      "步骤 3: 验证收到多个 'text' 事件，每个包含部分文字",
+      "步骤 4: 验证最后收到 'done' 事件",
+      "步骤 5: 拼接所有 text 事件，验证与最终消息一致"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "获取对话消息列表：GET /api/conversations/:id/messages 分页获取历史消息",
+    "steps": [
+      "步骤 1: 创建对话并发送 10 条消息",
+      "步骤 2: GET /api/conversations/:id/messages?limit=5",
+      "步骤 3: 验证返回最新的 5 条消息",
+      "步骤 4: 使用 cursor 参数获取下一页，验证返回更早的消息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "删除消息：DELETE /api/conversations/:id/messages/:mid",
+    "steps": [
+      "步骤 1: 创建对话并发送消息",
+      "步骤 2: DELETE /api/conversations/:id/messages/:mid",
+      "步骤 3: 验证返回 200",
+      "步骤 4: 获取消息列表验证该消息已不存在"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "重新生成回复：POST /api/conversations/:id/regenerate 删除最后一条 AI 回复并重新生成",
+    "steps": [
+      "步骤 1: 发送消息获取 AI 回复",
+      "步骤 2: 记录 AI 回复内容",
+      "步骤 3: POST /api/conversations/:id/regenerate",
+      "步骤 4: 验证返回新的 SSE 流式回复",
+      "步骤 5: 验证新回复替换了旧回复"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "清空对话历史：POST /api/conversations/:id/clear 删除所有消息",
+    "steps": [
+      "步骤 1: 创建对话并发送多条消息",
+      "步骤 2: POST /api/conversations/:id/clear",
+      "步骤 3: GET /api/conversations/:id/messages",
+      "步骤 4: 验证消息列表为空"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "LangChain Agent 角色性格注入：AI 回复符合角色设定的性格和说话风格",
+    "steps": [
+      "步骤 1: 创建角色，personality 设为 '说话很可爱，喜欢用颜文字，经常说 喵~'",
+      "步骤 2: 创建对话并发送 '你好'",
+      "步骤 3: 验证 AI 回复中包含可爱风格的语言",
+      "步骤 4: 创建另一个角色，personality 设为 '冷酷、简短回复、不轻易表露感情'",
+      "步骤 5: 验证该角色的回复风格明显不同"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "对话历史上下文：Agent 能记住多轮对话内容",
+    "steps": [
+      "步骤 1: 创建对话",
+      "步骤 2: 发送 '我叫张三'",
+      "步骤 3: 等待回复",
+      "步骤 4: 发送 '我叫什么名字？'",
+      "步骤 5: 验证 AI 回复中提到 '张三'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "WebSocket 语音通话连接建立：连接 /api/voice/ws/:conversation_id 成功",
+    "steps": [
+      "步骤 1: 创建角色和对话",
+      "步骤 2: 建立 WebSocket 连接到 /api/voice/ws/:conversation_id",
+      "步骤 3: 发送 {type: 'config', sample_rate: 16000, format: 'pcm'}",
+      "步骤 4: 验证连接成功建立",
+      "步骤 5: 验证收到 {type: 'status', status: 'listening'}"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音识别（ASR）：发送音频数据，接收实时识别文字",
+    "steps": [
+      "步骤 1: 建立语音通话 WebSocket 连接",
+      "步骤 2: 发送 {type: 'start_recording'}",
+      "步骤 3: 发送多个 {type: 'audio_chunk', data: base64_audio} 音频片段",
+      "步骤 4: 发送 {type: 'stop_recording'}",
+      "步骤 5: 验证收到 {type: 'transcription', text: '...', is_final: false} 中间结果",
+      "步骤 6: 验证收到 {type: 'transcription', text: '...', is_final: true} 最终结果"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音合成（TTS）：AI 回复文字被转为语音流式推送",
+    "steps": [
+      "步骤 1: 建立语音通话连接",
+      "步骤 2: 发送音频完成识别后",
+      "步骤 3: 验证收到 {type: 'ai_text', text: '...', is_final: false} 流式文字",
+      "步骤 4: 验证收到 {type: 'ai_audio', data: base64_audio, is_final: false} 流式音频",
+      "步骤 5: 验证最终收到 is_final: true 的消息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音通话状态管理：服务端正确推送 listening/thinking/speaking 状态",
+    "steps": [
+      "步骤 1: 建立语音通话连接",
+      "步骤 2: 初始状态为 listening",
+      "步骤 3: 用户停止说话后，验证收到 status: thinking",
+      "步骤 4: AI 开始回复后，验证收到 status: speaking",
+      "步骤 5: AI 说完后，验证回到 status: listening"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音通话打断：用户说话时自动停止 AI 音频播放",
+    "steps": [
+      "步骤 1: 建立语音通话连接",
+      "步骤 2: 触发 AI 回复（speaking 状态）",
+      "步骤 3: 在 AI 说话时发送 {type: 'interrupt'}",
+      "步骤 4: 验证 AI 音频停止推送",
+      "步骤 5: 验证状态切回 listening"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音通话消息持久化：通话中的对话内容保存到消息历史",
+    "steps": [
+      "步骤 1: 进行一段语音通话（发送音频、接收回复）",
+      "步骤 2: 断开 WebSocket 连接",
+      "步骤 3: GET /api/conversations/:id/messages",
+      "步骤 4: 验证通话中的文字内容已保存为消息",
+      "步骤 5: 验证消息 message_type 标记为 voice"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "获取音色列表：GET /api/voices 返回预设音色和用户自定义音色",
+    "steps": [
+      "步骤 1: GET /api/voices",
+      "步骤 2: 验证返回包含预设音色（voice_type: preset）",
+      "步骤 3: 创建自定义音色后再次获取",
+      "步骤 4: 验证自定义音色也在列表中"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "系统预设音色：GET /api/voices/presets 返回预设音色列表",
+    "steps": [
+      "步骤 1: GET /api/voices/presets",
+      "步骤 2: 验证返回多个预设音色",
+      "步骤 3: 每个音色包含 id, name, language, voice_type: 'preset'",
+      "步骤 4: 验证预设音色覆盖中文和英文"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "创建自定义音色（零样本）：POST /api/voices 上传参考音频创建零样本音色",
+    "steps": [
+      "步骤 1: POST /api/voices，上传 5-10 秒参考音频",
+      "步骤 2: 验证返回音色信息，voice_type: cloned_zeroshot",
+      "步骤 3: 验证 status 为 ready（零样本即时可用）",
+      "步骤 4: 验证 reference_audio_url 可访问"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "试听音色：POST /api/voices/preview 输入文本返回合成音频",
+    "steps": [
+      "步骤 1: POST /api/voices/preview，body: {voice_id, text: '你好，很高兴认识你'}",
+      "步骤 2: 验证返回音频数据（wav/mp3）",
+      "步骤 3: 验证音频可正常播放",
+      "步骤 4: 验证不同音色合成的音频有明显区别"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "启动音色训练：POST /api/voices/:id/train 启动异步训练任务",
+    "steps": [
+      "步骤 1: 创建音色并上传 60 秒参考音频",
+      "步骤 2: POST /api/voices/:id/train",
+      "步骤 3: 验证返回 202 Accepted",
+      "步骤 4: 验证音色 status 变为 training",
+      "步骤 5: GET /api/voices/:id/train/status 验证返回训练进度"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "音色训练进度查询：GET /api/voices/:id/train/status 返回训练状态和进度",
+    "steps": [
+      "步骤 1: 启动音色训练",
+      "步骤 2: 轮询 GET /api/voices/:id/train/status",
+      "步骤 3: 验证返回 {status, progress: 0.0-1.0, estimated_time}",
+      "步骤 4: 验证训练完成后 status 变为 ready"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "删除自定义音色：DELETE /api/voices/:id",
+    "steps": [
+      "步骤 1: 创建自定义音色",
+      "步骤 2: DELETE /api/voices/:id",
+      "步骤 3: 验证返回 200",
+      "步骤 4: 验证音色已从列表中移除",
+      "步骤 5: 验证不能删除预设音色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色绑定音色：创建/编辑角色时关联 voice_id",
+    "steps": [
+      "步骤 1: 创建音色",
+      "步骤 2: 创建角色，设置 voice_id",
+      "步骤 3: 验证角色详情中 voice_id 正确",
+      "步骤 4: 进行语音通话，验证 AI 回复使用该音色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "创建角色知识库：POST /api/characters/:id/knowledge-base",
+    "steps": [
+      "步骤 1: 创建角色",
+      "步骤 2: POST /api/characters/:id/knowledge-base，body: {name, description}",
+      "步骤 3: 验证返回知识库信息",
+      "步骤 4: GET /api/characters/:id/knowledge-base 验证知识库存在"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "上传文档到知识库：POST /api/knowledge-bases/:id/documents",
+    "steps": [
+      "步骤 1: 创建角色知识库",
+      "步骤 2: POST /api/knowledge-bases/:id/documents 上传 PDF 文件",
+      "步骤 3: 验证返回文档信息，status 初始为 pending",
+      "步骤 4: 轮询状态直到变为 indexed",
+      "步骤 5: 上传 TXT 文件，验证同样能处理",
+      "步骤 6: 验证知识库 document_count 和 chunk_count 更新"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "文档处理：上传的文档被自动解析、分块、向量化",
+    "steps": [
+      "步骤 1: 上传包含已知内容的 TXT 文档",
+      "步骤 2: 等待文档处理完成（status: indexed）",
+      "步骤 3: GET /api/knowledge-bases/:id/search?q=文档中的关键词",
+      "步骤 4: 验证搜索返回相关的文本片段",
+      "步骤 5: 验证返回的片段确实来自上传的文档"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "RAG 增强对话：对话时自动检索知识库相关内容增强回答",
+    "steps": [
+      "步骤 1: 创建角色并建立知识库",
+      "步骤 2: 上传包含特定信息的文档（如 '公司成立于 2020 年'）",
+      "步骤 3: 等待文档索引完成",
+      "步骤 4: 创建对话并问 '公司是什么时候成立的？'",
+      "步骤 5: 验证 AI 回复中包含 '2020 年' 的信息",
+      "步骤 6: 不使用知识库的角色回答相同问题，验证无法提供该信息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "删除知识库文档：DELETE /api/knowledge-bases/:id/documents/:did",
+    "steps": [
+      "步骤 1: 上传文档到知识库",
+      "步骤 2: DELETE /api/knowledge-bases/:id/documents/:did",
+      "步骤 3: 验证文档已从列表移除",
+      "步骤 4: 搜索之前文档中的内容，验证不再返回结果"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "重建知识库索引：POST /api/knowledge-bases/:id/reindex",
+    "steps": [
+      "步骤 1: 创建知识库并上传文档",
+      "步骤 2: POST /api/knowledge-bases/:id/reindex",
+      "步骤 3: 验证返回 202 Accepted",
+      "步骤 4: 等待重建完成",
+      "步骤 5: 搜索验证索引正常工作"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "获取内置工具列表：GET /api/tools/builtin 返回系统内置工具",
+    "steps": [
+      "步骤 1: GET /api/tools/builtin",
+      "步骤 2: 验证返回内置工具列表（天气、搜索、提醒、计算等）",
+      "步骤 3: 每个工具包含 name, description, parameters schema"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Function Call — 查询天气工具：角色调用天气工具并整合到回复中",
+    "steps": [
+      "步骤 1: 创建角色并绑定天气工具",
+      "步骤 2: 创建对话",
+      "步骤 3: 发送 '今天北京天气怎么样？'",
+      "步骤 4: 验证 SSE 流中收到 tool_call 事件（调用 get_weather）",
+      "步骤 5: 验证收到 tool_result 事件（天气数据）",
+      "步骤 6: 验证最终回复包含天气信息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Function Call — 计算工具：角色调用计算器工具",
+    "steps": [
+      "步骤 1: 创建角色并绑定计算工具",
+      "步骤 2: 发送 '123 乘以 456 等于多少？'",
+      "步骤 3: 验证 Agent 调用了计算工具",
+      "步骤 4: 验证回复中包含正确结果 56088"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Function Call — 日期时间工具：角色能查询当前时间",
+    "steps": [
+      "步骤 1: 创建角色并绑定日期时间工具",
+      "步骤 2: 发送 '现在几点了？'",
+      "步骤 3: 验证 Agent 调用了时间查询工具",
+      "步骤 4: 验证回复中包含当前时间"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "为角色绑定/解绑工具：PUT /api/characters/:id/tools",
+    "steps": [
+      "步骤 1: 创建角色",
+      "步骤 2: PUT /api/characters/:id/tools，body: {tool_ids: [id1, id2]}",
+      "步骤 3: GET /api/characters/:id/tools，验证返回绑定的工具",
+      "步骤 4: PUT /api/characters/:id/tools，body: {tool_ids: []}，验证解绑成功"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "自定义工具注册：POST /api/tools 注册用户自定义工具",
+    "steps": [
+      "步骤 1: POST /api/tools，body: {name, description, parameters: {JSON Schema}, webhook_url}",
+      "步骤 2: 验证返回工具详情",
+      "步骤 3: GET /api/tools/:id 验证工具信息正确",
+      "步骤 4: 将工具绑定到角色并测试调用"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "收藏角色：用户可以收藏喜欢的公开角色",
+    "steps": [
+      "步骤 1: 发布角色",
+      "步骤 2: 另一用户收藏该角色",
+      "步骤 3: 获取用户收藏列表，验证角色在列表中",
+      "步骤 4: 取消收藏，验证从列表移除"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "用户设置获取和更新：GET/PUT /api/settings",
+    "steps": [
+      "步骤 1: GET /api/settings 获取默认设置",
+      "步骤 2: PUT /api/settings，body: {theme: 'dark', language: 'zh'}",
+      "步骤 3: GET /api/settings 验证设置已更新",
+      "步骤 4: 验证不同用户设置互相隔离"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "LLM 模型切换：GET/PUT /api/settings/llm-models 获取和设置默认模型",
+    "steps": [
+      "步骤 1: GET /api/settings/llm-models 获取可用模型列表",
+      "步骤 2: 验证列表包含多个模型选项",
+      "步骤 3: PUT /api/settings/llm-models 切换默认模型",
+      "步骤 4: 发送消息验证使用了新选择的模型"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "React 前端启动：Vite 开发服务器正常启动，首页可访问",
+    "steps": [
+      "步骤 1: 进入 frontend 目录",
+      "步骤 2: 运行 npm run dev",
+      "步骤 3: 访问 http://localhost:5173",
+      "步骤 4: 验证页面正常渲染，无控制台错误"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "前端路由：所有页面路由正确导航，无 404",
+    "steps": [
+      "步骤 1: 访问 / (首页)",
+      "步骤 2: 访问 /explore (发现页)",
+      "步骤 3: 访问 /character/create (创建角色)",
+      "步骤 4: 访问 /profile (个人中心)",
+      "步骤 5: 访问 /settings (设置)",
+      "步骤 6: 验证所有页面正常渲染",
+      "步骤 7: 验证未登录时重定向到登录页"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "用户注册页面：填写表单完成注册",
+    "steps": [
+      "步骤 1: 导航到注册页面",
+      "步骤 2: 填写用户名、邮箱、密码、确认密码",
+      "步骤 3: 点击注册按钮",
+      "步骤 4: 验证注册成功后跳转到首页",
+      "步骤 5: 验证导航栏显示用户信息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "用户登录页面：使用用户名和密码登录",
+    "steps": [
+      "步骤 1: 导航到登录页面",
+      "步骤 2: 输入用户名和密码",
+      "步骤 3: 点击登录按钮",
+      "步骤 4: 验证登录成功跳转到首页",
+      "步骤 5: 刷新页面验证登录状态持久化（Token 存储）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "首页 — 我的角色板块：显示用户创建的角色卡片网格",
+    "steps": [
+      "步骤 1: 登录并创建 3 个角色",
+      "步骤 2: 导航到首页",
+      "步骤 3: 验证显示角色卡片（头像、名字、简介）",
+      "步骤 4: 验证最多显示 6 个，有'查看全部'链接",
+      "步骤 5: 点击角色卡片导航到角色详情"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "首页 — 最近对话列表：显示按时间排序的最近对话",
+    "steps": [
+      "步骤 1: 创建多个对话",
+      "步骤 2: 导航到首页",
+      "步骤 3: 验证显示最近对话（角色头像、名字、最后一条消息摘要、时间）",
+      "步骤 4: 点击对话进入聊天页面"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色创建页面完整流程：从表单填写到成功创建角色",
+    "steps": [
+      "步骤 1: 导航到 /character/create",
+      "步骤 2: 上传头像图片",
+      "步骤 3: 填写名字、选择性别和关系类型",
+      "步骤 4: 输入简介（10-500 字符验证）",
+      "步骤 5: 选择性格模板或手动输入性格描述",
+      "步骤 6: 输入背景故事",
+      "步骤 7: 设置开场白",
+      "步骤 8: 选择标签（最多 5 个）",
+      "步骤 9: 选择音色",
+      "步骤 10: 点击'保存为草稿'",
+      "步骤 11: 验证角色创建成功并跳转到角色详情页",
+      "步骤 12: 验证所有填写的信息正确显示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色编辑页面：编辑已有角色的所有字段",
+    "steps": [
+      "步骤 1: 创建角色后导航到 /character/:id/edit",
+      "步骤 2: 验证表单预填充了现有数据",
+      "步骤 3: 修改名字和性格描述",
+      "步骤 4: 点击保存",
+      "步骤 5: 验证更新成功",
+      "步骤 6: 刷新页面验证修改已持久化"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色详情页（公开视角）：展示角色完整信息和操作按钮",
+    "steps": [
+      "步骤 1: 发布一个角色",
+      "步骤 2: 另一用户访问 /character/:id",
+      "步骤 3: 验证显示头像、名字、性格描述、背景故事、标签",
+      "步骤 4: 验证显示统计数据（点赞数、对话数）",
+      "步骤 5: 验证操作按钮：开始聊天、语音通话、点赞、克隆",
+      "步骤 6: 点击'开始聊天'跳转到聊天页面"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发现页浏览 UI：展示公开角色卡片网格/瀑布流",
+    "steps": [
+      "步骤 1: 导航到 /explore",
+      "步骤 2: 验证顶部显示分类 Tab（全部/女友/男友/朋友/热门/最新）",
+      "步骤 3: 验证角色卡片展示正确（头像、名字、简介、标签、点赞数）",
+      "步骤 4: 点击不同 Tab 验证筛选生效",
+      "步骤 5: 滚动到底部验证无限加载更多角色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发现页搜索：在搜索栏输入关键词实时搜索角色",
+    "steps": [
+      "步骤 1: 导航到 /explore",
+      "步骤 2: 在搜索栏输入关键词",
+      "步骤 3: 验证搜索结果实时更新",
+      "步骤 4: 验证搜索匹配角色名称和简介"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发现页标签筛选：点击标签筛选对应角色",
+    "steps": [
+      "步骤 1: 导航到 /explore",
+      "步骤 2: 查看标签云区域",
+      "步骤 3: 点击某个标签",
+      "步骤 4: 验证只显示包含该标签的角色",
+      "步骤 5: 点击标签取消筛选，验证恢复全部"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "聊天页面文字对话完整流程：从输入到接收 AI 流式回复",
+    "steps": [
+      "步骤 1: 创建角色并进入聊天页面 /chat/:conversationId",
+      "步骤 2: 验证显示角色头像、名字、在线状态",
+      "步骤 3: 验证显示角色开场白消息",
+      "步骤 4: 在输入框输入文字",
+      "步骤 5: 点击发送或按 Enter",
+      "步骤 6: 验证用户消息立即显示（右侧气泡）",
+      "步骤 7: 验证出现打字指示器",
+      "步骤 8: 验证 AI 回复逐字显示（左侧气泡，带角色头像）",
+      "步骤 9: 验证回复完成后打字指示器消失",
+      "步骤 10: 发送第二条消息验证多轮对话",
+      "步骤 11: 验证 Shift+Enter 换行而非发送"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "聊天页面语音输入：按住说话或点击切换录音模式",
+    "steps": [
+      "步骤 1: 进入聊天页面",
+      "步骤 2: 点击语音输入按钮",
+      "步骤 3: 验证切换到录音模式",
+      "步骤 4: 按住录音按钮开始录音",
+      "步骤 5: 释放后验证音频发送并转为文字",
+      "步骤 6: 验证收到 AI 文字和语音回复"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "聊天页面工具调用展示：AI 调用工具时显示折叠卡片",
+    "steps": [
+      "步骤 1: 创建绑定了天气工具的角色",
+      "步骤 2: 进入聊天发送 '今天天气怎么样'",
+      "步骤 3: 验证消息流中出现工具调用卡片（'正在查询天气...'）",
+      "步骤 4: 验证卡片可展开查看工具调用详情",
+      "步骤 5: 验证工具调用完成后 AI 继续回复"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音通话全屏页面：点击语音通话按钮进入全屏通话界面",
+    "steps": [
+      "步骤 1: 在聊天页面点击语音通话按钮",
+      "步骤 2: 验证跳转到 /voice/:conversationId 全屏页面",
+      "步骤 3: 验证显示深色背景、角色大头像、呼吸灯动画",
+      "步骤 4: 验证显示通话时长计时器",
+      "步骤 5: 验证显示控制按钮（静音、扬声器、暂停、挂断）",
+      "步骤 6: 验证显示 AI 状态（听你说话中...）",
+      "步骤 7: 说话后验证显示实时字幕",
+      "步骤 8: 验证 AI 回复时显示波形可视化",
+      "步骤 9: 点击挂断验证返回聊天页面",
+      "步骤 10: 验证显示通话摘要"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音通话静音功能：点击静音按钮暂停音频发送",
+    "steps": [
+      "步骤 1: 进入语音通话页面",
+      "步骤 2: 点击静音按钮",
+      "步骤 3: 验证按钮切换为'已静音'状态",
+      "步骤 4: 说话验证 AI 无法听到（不触发回复）",
+      "步骤 5: 取消静音验证恢复正常"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "音色管理页面：展示音色列表和创建新音色",
+    "steps": [
+      "步骤 1: 导航到 /profile/voices",
+      "步骤 2: 验证显示预设音色和自定义音色列表",
+      "步骤 3: 每个音色卡片显示名字、语言、类型、试听按钮",
+      "步骤 4: 点击试听按钮验证播放音色示例"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "创建新音色完整流程 UI：从上传音频到保存音色",
+    "steps": [
+      "步骤 1: 在音色管理页面点击'创建新音色'",
+      "步骤 2: 输入音色名称",
+      "步骤 3: 选择语言",
+      "步骤 4: 上传参考音频文件",
+      "步骤 5: 验证显示音频波形预览",
+      "步骤 6: 选择复刻方式（零样本/训练）",
+      "步骤 7: 点击'试听'验证合成效果",
+      "步骤 8: 点击'保存'",
+      "步骤 9: 验证音色出现在列表中",
+      "步骤 10: 如选择训练复刻，验证显示训练进度条"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "知识库管理页面：展示文档列表和上传功能",
+    "steps": [
+      "步骤 1: 创建角色并导航到 /character/:id/knowledge",
+      "步骤 2: 验证显示空状态引导创建知识库",
+      "步骤 3: 创建知识库",
+      "步骤 4: 验证显示文档上传区域（拖拽或点击）",
+      "步骤 5: 上传 PDF 文件",
+      "步骤 6: 验证显示处理进度",
+      "步骤 7: 验证处理完成后显示已索引状态",
+      "步骤 8: 在搜索框测试查询",
+      "步骤 9: 验证显示检索到的文本片段"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "工具管理页面：为角色启用/禁用工具",
+    "steps": [
+      "步骤 1: 导航到 /character/:id/tools",
+      "步骤 2: 验证显示内置工具列表",
+      "步骤 3: 用开关为角色启用'查询天气'工具",
+      "步骤 4: 验证开关状态保存成功",
+      "步骤 5: 进入聊天验证工具生效"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "个人中心页面：展示个人信息和统计",
+    "steps": [
+      "步骤 1: 导航到 /profile",
+      "步骤 2: 验证显示头像、昵称、简介",
+      "步骤 3: 验证显示角色统计（总数、公开数、总点赞数）",
+      "步骤 4: 验证显示我的收藏角色",
+      "步骤 5: 点击编辑资料验证可修改信息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "设置页面 — 外观设置：主题切换和字体大小调整",
+    "steps": [
+      "步骤 1: 导航到 /settings",
+      "步骤 2: 切换主题到深色模式",
+      "步骤 3: 验证整个应用切换为深色主题",
+      "步骤 4: 调整字体大小",
+      "步骤 5: 验证文字大小变化",
+      "步骤 6: 刷新页面验证设置持久化"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "设置页面 — 语音设置：ASR 语言、TTS 语速等",
+    "steps": [
+      "步骤 1: 导航到设置页面的语音设置 Tab",
+      "步骤 2: 选择默认 ASR 语言为中文",
+      "步骤 3: 调整 TTS 语速（0.5x - 2.0x 滑块）",
+      "步骤 4: 开启/关闭自动播放语音回复",
+      "步骤 5: 保存设置",
+      "步骤 6: 进入聊天验证设置生效"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "设置页面 — 模型设置：切换默认 LLM 和参数",
+    "steps": [
+      "步骤 1: 导航到设置页面的模型设置 Tab",
+      "步骤 2: 查看可用 LLM 列表",
+      "步骤 3: 切换默认模型",
+      "步骤 4: 调整 Temperature 和 Max Tokens",
+      "步骤 5: 保存设置"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "全局搜索：导航栏搜索框可搜索角色和对话",
+    "steps": [
+      "步骤 1: 在顶部导航栏搜索框输入关键词",
+      "步骤 2: 验证下拉显示匹配的角色和对话",
+      "步骤 3: 点击角色结果导航到角色详情",
+      "步骤 4: 点击对话结果导航到聊天页面"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "消息时间戳分隔：聊天页面按日期分组显示时间戳",
+    "steps": [
+      "步骤 1: 创建对话并在不同时间发送消息",
+      "步骤 2: 打开聊天页面",
+      "步骤 3: 验证消息按日期分组（今天、昨天等）",
+      "步骤 4: 验证时间戳格式正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "文字输入框自动增高：随输入内容多行自动增高",
+    "steps": [
+      "步骤 1: 进入聊天页面",
+      "步骤 2: 在输入框输入一行文字",
+      "步骤 3: 继续输入使文字换行",
+      "步骤 4: 验证输入框高度自动增加",
+      "步骤 5: 发送消息后验证输入框恢复初始高度"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "导航栏用户菜单：点击头像显示下拉菜单",
+    "steps": [
+      "步骤 1: 点击导航栏右侧用户头像",
+      "步骤 2: 验证显示下拉菜单（个人中心、设置、退出）",
+      "步骤 3: 点击'退出'验证登出成功",
+      "步骤 4: 验证跳转到登录页面"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色表单校验：必填字段为空时显示错误提示",
+    "steps": [
+      "步骤 1: 进入创建角色页面",
+      "步骤 2: 不填任何字段直接点击保存",
+      "步骤 3: 验证名字字段显示'请输入角色名称'错误",
+      "步骤 4: 验证简介字段显示'请输入角色简介'错误",
+      "步骤 5: 填写名字为 1 个字符，验证显示'名称至少 2 个字符'",
+      "步骤 6: 填写简介超过 500 字符，验证显示字数超限提示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "错误处理 — 网络错误：网络断开时显示友好提示",
+    "steps": [
+      "步骤 1: 正常使用应用",
+      "步骤 2: 模拟网络断开（停止后端服务）",
+      "步骤 3: 执行操作（发送消息等）",
+      "步骤 4: 验证显示 Toast 错误提示而非白屏",
+      "步骤 5: 恢复网络后验证自动重连"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "错误处理 — 401 未授权：Token 过期时自动跳转登录",
+    "steps": [
+      "步骤 1: 登录并使用应用",
+      "步骤 2: 手动清除 Token",
+      "步骤 3: 执行需要认证的操作",
+      "步骤 4: 验证自动跳转到登录页面",
+      "步骤 5: 验证登录后跳转回之前的页面"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "数据加载状态：API 请求期间显示加载状态",
+    "steps": [
+      "步骤 1: 导航到角色列表页面",
+      "步骤 2: 验证数据加载时显示骨架屏或加载动画",
+      "步骤 3: 数据加载完成后显示实际内容",
+      "步骤 4: 发送聊天消息时验证显示打字指示器"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "空状态展示：无数据时显示引导性空状态",
+    "steps": [
+      "步骤 1: 新用户登录后访问首页",
+      "步骤 2: 验证'我的角色'区域显示空状态（引导创建角色）",
+      "步骤 3: 验证'最近对话'区域显示空状态",
+      "步骤 4: 搜索无结果时显示'未找到匹配结果'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "对话列表侧边栏：左侧显示对话列表，点击切换对话",
+    "steps": [
+      "步骤 1: 创建多个对话",
+      "步骤 2: 在聊天页面验证左侧侧边栏显示对话列表",
+      "步骤 3: 点击不同对话验证主区域内容切换",
+      "步骤 4: 验证当前活跃对话高亮显示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "语音消息播放：聊天中的语音消息显示波形并可播放",
+    "steps": [
+      "步骤 1: 通过语音输入发送消息",
+      "步骤 2: 验证语音消息显示波形图和时长",
+      "步骤 3: 点击播放按钮验证音频播放",
+      "步骤 4: 验证 AI 语音回复同样可播放"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "他人主页：查看其他用户的公开角色",
+    "steps": [
+      "步骤 1: 在发现页点击某个角色的创建者名字",
+      "步骤 2: 验证跳转到 /user/:userId",
+      "步骤 3: 验证显示该用户的公开角色列表",
+      "步骤 4: 验证不显示草稿角色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "聊天消息分页加载：滚动到顶部加载更早的消息",
+    "steps": [
+      "步骤 1: 创建对话并发送超过 20 条消息",
+      "步骤 2: 打开聊天页面（默认显示最新消息）",
+      "步骤 3: 滚动到顶部",
+      "步骤 4: 验证触发加载更早消息",
+      "步骤 5: 验证加载动画显示",
+      "步骤 6: 验证新加载的消息插入到顶部"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "文件上传大小限制：超过限制的文件上传被拒绝并提示",
+    "steps": [
+      "步骤 1: 尝试上传超过大小限制的头像图片",
+      "步骤 2: 验证显示文件过大的错误提示",
+      "步骤 3: 尝试上传超过 60 秒的音频文件",
+      "步骤 4: 验证显示音频过长的错误提示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色创建性格模板选择：点击预设模板自动填充性格描述",
+    "steps": [
+      "步骤 1: 进入创建角色页面",
+      "步骤 2: 在性格设定区域点击'温柔体贴型'模板",
+      "步骤 3: 验证性格描述文本域自动填充模板内容",
+      "步骤 4: 验证用户可以在模板基础上继续编辑",
+      "步骤 5: 切换到另一个模板验证内容更新"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色创建音色选择和试听：选择音色并试听合成效果",
+    "steps": [
+      "步骤 1: 进入创建角色页面的音色设定区域",
+      "步骤 2: 查看可选音色列表",
+      "步骤 3: 选择一个音色",
+      "步骤 4: 输入测试文本，点击试听",
+      "步骤 5: 验证播放合成音频",
+      "步骤 6: 切换不同音色试听，验证声音有区别"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "推荐角色轮播：首页展示社区热门角色推荐",
+    "steps": [
+      "步骤 1: 创建并发布多个有点赞的角色",
+      "步骤 2: 访问首页",
+      "步骤 3: 验证显示推荐角色轮播区域",
+      "步骤 4: 验证可左右滑动浏览",
+      "步骤 5: 点击角色进入详情页"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "知识库批量上传文档：拖拽多个文件同时上传",
+    "steps": [
+      "步骤 1: 进入角色知识库管理页面",
+      "步骤 2: 拖拽 3 个文件到上传区域",
+      "步骤 3: 验证 3 个文件同时开始上传和处理",
+      "步骤 4: 验证每个文件独立显示处理状态",
+      "步骤 5: 等待全部处理完成",
+      "步骤 6: 验证知识库统计数据更新"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "自定义工具创建 UI：高级用户可创建自定义工具",
+    "steps": [
+      "步骤 1: 进入工具管理页面",
+      "步骤 2: 点击'创建自定义工具'",
+      "步骤 3: 填写工具名称和描述",
+      "步骤 4: 定义参数（JSON Schema）",
+      "步骤 5: 设置执行逻辑（webhook URL）",
+      "步骤 6: 保存工具",
+      "步骤 7: 验证工具出现在列表中",
+      "步骤 8: 绑定到角色并测试调用"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "修改密码 UI：设置页面中修改密码功能",
+    "steps": [
+      "步骤 1: 导航到设置页面账号设置",
+      "步骤 2: 输入当前密码",
+      "步骤 3: 输入新密码和确认密码",
+      "步骤 4: 验证密码强度提示",
+      "步骤 5: 点击保存",
+      "步骤 6: 退出登录后用新密码登录验证"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "数据导出：从设置页面导出用户数据",
+    "steps": [
+      "步骤 1: 导航到设置页面数据管理",
+      "步骤 2: 点击'导出我的数据'",
+      "步骤 3: 验证下载文件（JSON/ZIP 格式）",
+      "步骤 4: 验证导出数据包含角色、对话、消息等"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色发现页排序选项：按热门/最新/点赞最多排序",
+    "steps": [
+      "步骤 1: 导航到发现页",
+      "步骤 2: 点击排序下拉选择'热门'",
+      "步骤 3: 验证角色按热度排序",
+      "步骤 4: 切换到'最新'，验证按时间排序",
+      "步骤 5: 切换到'点赞最多'，验证按点赞数排序"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "点赞交互 UI：点击爱心按钮切换点赞状态",
+    "steps": [
+      "步骤 1: 在角色详情页或卡片上找到点赞按钮",
+      "步骤 2: 点击按钮，验证图标变为实心红心",
+      "步骤 3: 验证点赞数+1",
+      "步骤 4: 再次点击取消点赞，图标恢复空心",
+      "步骤 5: 验证点赞数-1"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "克隆角色 UI：在角色详情页克隆他人角色",
+    "steps": [
+      "步骤 1: 查看他人的公开角色详情页",
+      "步骤 2: 点击'克隆'按钮",
+      "步骤 3: 验证弹出确认对话框",
+      "步骤 4: 确认后验证角色出现在我的角色列表中",
+      "步骤 5: 验证克隆的角色为草稿状态"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "聊天页面更多选项菜单：清空记录、删除对话等",
+    "steps": [
+      "步骤 1: 进入聊天页面",
+      "步骤 2: 点击右上角更多选项按钮",
+      "步骤 3: 验证显示菜单（清空记录、删除对话）",
+      "步骤 4: 点击'清空记录'验证弹出确认框",
+      "步骤 5: 确认后验证消息被清空"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Toast 通知系统：操作成功/失败时显示 Toast 提示",
+    "steps": [
+      "步骤 1: 执行创建角色操作",
+      "步骤 2: 验证显示'创建成功' Toast 通知",
+      "步骤 3: 执行失败操作",
+      "步骤 4: 验证显示错误 Toast 通知",
+      "步骤 5: 验证 Toast 自动消失（约 3 秒）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "删除确认对话框：删除角色/对话/文档前弹出确认",
+    "steps": [
+      "步骤 1: 点击删除角色按钮",
+      "步骤 2: 验证弹出确认对话框（'确定删除角色 XXX 吗？'）",
+      "步骤 3: 点击取消，验证角色未被删除",
+      "步骤 4: 再次点击删除并确认，验证角色被删除"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API 接口安全：只能操作自己的数据，不能越权访问他人数据",
+    "steps": [
+      "步骤 1: 用户 A 创建角色",
+      "步骤 2: 用户 B 尝试 PUT /api/characters/:id（A 的角色），验证返回 403",
+      "步骤 3: 用户 B 尝试 DELETE /api/characters/:id（A 的角色），验证返回 403",
+      "步骤 4: 用户 B 尝试获取 A 的私有对话，验证返回 403"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "支持多种文档格式：知识库支持 PDF、TXT、MD、DOCX 文档",
+    "steps": [
+      "步骤 1: 创建角色知识库",
+      "步骤 2: 上传 PDF 文件，验证处理成功",
+      "步骤 3: 上传 TXT 文件，验证处理成功",
+      "步骤 4: 上传 Markdown 文件，验证处理成功",
+      "步骤 5: 上传 DOCX 文件，验证处理成功",
+      "步骤 6: 对每种格式搜索内容验证索引正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "文件存储服务：上传的文件可通过 URL 正常访问",
+    "steps": [
+      "步骤 1: 上传用户头像",
+      "步骤 2: 上传角色头像和封面图",
+      "步骤 3: 上传参考音频",
+      "步骤 4: 验证所有文件 URL 可正常访问",
+      "步骤 5: 验证文件类型和内容正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Celery 异步任务：音色训练等耗时任务通过 Celery 异步执行",
+    "steps": [
+      "步骤 1: 确认 Celery Worker 正在运行",
+      "步骤 2: 提交音色训练任务",
+      "步骤 3: 验证 API 立即返回（不阻塞）",
+      "步骤 4: 验证任务在 Worker 中异步执行",
+      "步骤 5: 验证任务完成后状态更新"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Redis 缓存：频繁访问的数据使用 Redis 缓存",
+    "steps": [
+      "步骤 1: 确认 Redis 连接正常",
+      "步骤 2: 首次请求角色列表（冷查询）",
+      "步骤 3: 再次请求相同数据（命中缓存）",
+      "步骤 4: 验证缓存命中时响应更快",
+      "步骤 5: 修改数据后验证缓存失效"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色封面图在详情页展示：大图展示角色封面",
+    "steps": [
+      "步骤 1: 创建角色并上传封面图",
+      "步骤 2: 访问角色详情页",
+      "步骤 3: 验证封面图在页面顶部大图展示",
+      "步骤 4: 验证封面图下方显示角色头像（叠加效果）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "环境变量配置加载：后端正确读取 .env 中的所有配置项",
+    "steps": [
+      "步骤 1: 创建 .env 文件设置所有必需环境变量",
+      "步骤 2: 启动后端服务",
+      "步骤 3: 验证数据库连接正常（DATABASE_URL）",
+      "步骤 4: 验证 LLM API 可用（LLM_API_KEY + LLM_BASE_URL）",
+      "步骤 5: 验证 JWT 签名正常（JWT_SECRET）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "前后端联调：前端 API 调用正确对接后端所有接口",
+    "steps": [
+      "步骤 1: 同时启动前后端服务",
+      "步骤 2: 通过前端注册用户，验证后端收到请求",
+      "步骤 3: 通过前端创建角色，验证数据入库",
+      "步骤 4: 通过前端发送消息，验证 SSE 流式响应正常",
+      "步骤 5: 验证跨域（CORS）配置正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "整体布局：桌面端三栏布局（侧边栏+主内容+面板），符合设计规范",
+    "steps": [
+      "步骤 1: 在桌面浏览器（1920px）访问应用",
+      "步骤 2: 验证顶部导航栏 + 左侧边栏 + 主内容区布局正确",
+      "步骤 3: 验证侧边栏宽度合适（约 280px）",
+      "步骤 4: 验证主内容区居中且最大宽度受限"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "主题色配色：渐变紫粉色主题色正确应用",
+    "steps": [
+      "步骤 1: 访问应用各页面",
+      "步骤 2: 验证主按钮使用渐变紫粉色（#7C3AED → #EC4899）",
+      "步骤 3: 验证标签使用主题色淡背景",
+      "步骤 4: 验证输入框聚焦时边框为主题色",
+      "步骤 5: 验证整体色调传达温暖、浪漫感"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "深色模式：切换到深色模式后所有页面样式正确",
+    "steps": [
+      "步骤 1: 切换到深色模式",
+      "步骤 2: 验证背景色为 #0F172A",
+      "步骤 3: 验证卡片背景为 #1E293B",
+      "步骤 4: 验证文字色为 #F1F5F9",
+      "步骤 5: 验证所有页面在深色模式下无文字不可读的情况",
+      "步骤 6: 验证图标和按钮在深色模式下清晰可见"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "浅色模式：默认浅色模式配色符合设计规范",
+    "steps": [
+      "步骤 1: 以浅色模式访问应用",
+      "步骤 2: 验证背景色为 #FFFFFF",
+      "步骤 3: 验证卡片背景为 #F8FAFC",
+      "步骤 4: 验证文字色为 #0F172A",
+      "步骤 5: 验证边框色为 #E2E8F0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "字体系统：正确使用系统字体栈和大小规范",
+    "steps": [
+      "步骤 1: 检查 body 字体为 Inter, -apple-system, sans-serif",
+      "步骤 2: 验证标题使用 font-bold, tracking-tight",
+      "步骤 3: 验证消息气泡文字为 16px, leading-normal",
+      "步骤 4: 验证代码块使用 JetBrains Mono, Consolas, monospace"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "聊天消息气泡样式：用户和 AI 消息气泡符合设计规范",
+    "steps": [
+      "步骤 1: 进入聊天页面",
+      "步骤 2: 验证用户消息：右对齐、主题色渐变背景、白色文字、圆角 18px",
+      "步骤 3: 验证 AI 消息：左对齐、浅色背景 #F1F5F9、深色文字、带角色头像",
+      "步骤 4: 验证消息间距合适（不拥挤也不过稀）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "角色卡片样式：卡片圆角、阴影、hover 效果正确",
+    "steps": [
+      "步骤 1: 查看角色卡片列表",
+      "步骤 2: 验证卡片圆角 16px",
+      "步骤 3: hover 时验证 scale(1.02) 放大效果",
+      "步骤 4: hover 时验证阴影加深",
+      "步骤 5: 验证过渡动画 200ms smooth"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "头像组件样式：不同场景下头像大小正确",
+    "steps": [
+      "步骤 1: 验证列表中头像为圆形 64px",
+      "步骤 2: 验证角色详情页头像为圆形 120px",
+      "步骤 3: 验证语音通话页头像为圆形 200px",
+      "步骤 4: 验证所有头像圆形裁剪无变形"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "按钮样式：主按钮和次按钮样式符合规范",
+    "steps": [
+      "步骤 1: 找到主按钮（如'创建角色'）",
+      "步骤 2: 验证渐变背景、白色文字、圆角 12px",
+      "步骤 3: 找到次按钮（如'取消'）",
+      "步骤 4: 验证边框样式、hover 时填充效果",
+      "步骤 5: 验证禁用状态减少透明度且不可点击"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "输入框样式：聚焦效果和边框正确",
+    "steps": [
+      "步骤 1: 找到文字输入框",
+      "步骤 2: 验证圆角 12px",
+      "步骤 3: 点击聚焦",
+      "步骤 4: 验证显示主题色边框 + 外发光效果",
+      "步骤 5: 验证 placeholder 文字颜色为灰色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "标签（Tag）样式：胶囊型标签正确显示",
+    "steps": [
+      "步骤 1: 查看角色卡片上的标签",
+      "步骤 2: 验证圆角 9999px（完全圆角胶囊型）",
+      "步骤 3: 验证主题色淡背景 + 主题色文字",
+      "步骤 4: 验证标签大小合适、文字居中"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "页面切换动画：页面间切换有 fade + slide 过渡效果",
+    "steps": [
+      "步骤 1: 从首页切换到发现页",
+      "步骤 2: 验证有 fade + slide 过渡动画",
+      "步骤 3: 验证动画时长约 200ms",
+      "步骤 4: 验证动画流畅无卡顿"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "消息出现动画：新消息从底部滑入并淡入",
+    "steps": [
+      "步骤 1: 在聊天中发送消息",
+      "步骤 2: 验证用户消息从底部滑入显示",
+      "步骤 3: 验证 AI 回复也从底部滑入",
+      "步骤 4: 验证淡入效果（opacity 0->1）",
+      "步骤 5: 验证动画时长约 300ms"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "打字指示器动画：三个点跳动动画",
+    "steps": [
+      "步骤 1: 发送消息等待 AI 回复",
+      "步骤 2: 验证显示打字指示器",
+      "步骤 3: 验证三个点依次跳动",
+      "步骤 4: 验证动画循环播放直到回复开始"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "语音通话呼吸灯动画：角色头像周围脉冲发光效果",
+    "steps": [
+      "步骤 1: 进入语音通话页面",
+      "步骤 2: 验证角色头像有呼吸灯脉冲动画",
+      "步骤 3: 验证动画颜色为主题色",
+      "步骤 4: 验证动画循环流畅"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "语音通话深色背景：全屏通话页面使用径向渐变深色背景",
+    "steps": [
+      "步骤 1: 进入语音通话全屏页面",
+      "步骤 2: 验证背景为径向渐变 #0F0A1A → #1A0F2E",
+      "步骤 3: 验证控制按钮在深色背景上清晰可见",
+      "步骤 4: 验证整体氛围沉浸感强"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "骨架屏加载动画：数据加载时显示 shimmer 动画骨架",
+    "steps": [
+      "步骤 1: 访问角色列表页面（模拟慢网络）",
+      "步骤 2: 验证显示骨架屏而非空白",
+      "步骤 3: 验证骨架屏有 shimmer 闪烁动画",
+      "步骤 4: 验证骨架屏形状与实际内容布局匹配"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Toast 通知动画：从顶部滑入并自动消失",
+    "steps": [
+      "步骤 1: 触发 Toast 通知（如创建角色成功）",
+      "步骤 2: 验证 Toast 从顶部滑入",
+      "步骤 3: 验证成功为绿色、错误为红色、警告为黄色、信息为蓝色",
+      "步骤 4: 验证约 3 秒后自动滑出消失"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "导航栏样式：Logo、搜索框、通知、用户头像正确排列",
+    "steps": [
+      "步骤 1: 查看顶部导航栏",
+      "步骤 2: 验证左侧 SoulMate Logo + 标题",
+      "步骤 3: 验证中间搜索框",
+      "步骤 4: 验证右侧通知铃铛 + 用户头像",
+      "步骤 5: 验证导航栏固定在顶部"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "响应式布局 — 平板端：两栏布局正确适配",
+    "steps": [
+      "步骤 1: 将浏览器窗口调整到平板宽度（768px）",
+      "步骤 2: 验证布局变为两栏",
+      "步骤 3: 验证侧边栏可折叠",
+      "步骤 4: 验证内容区域适当缩放"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "响应式布局 — 手机端：单栏布局和底部 Tab 导航",
+    "steps": [
+      "步骤 1: 将浏览器窗口调整到手机宽度（375px）",
+      "步骤 2: 验证变为单栏布局",
+      "步骤 3: 验证顶部导航栏简化",
+      "步骤 4: 验证底部显示 Tab 导航（首页、发现、创建、消息、我的）",
+      "步骤 5: 验证角色卡片单列显示",
+      "步骤 6: 验证聊天输入框不被键盘遮挡"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "发现页角色卡片网格：卡片布局美观整齐",
+    "steps": [
+      "步骤 1: 导航到发现页",
+      "步骤 2: 验证角色卡片网格排列整齐（桌面 3-4 列）",
+      "步骤 3: 验证卡片之间间距均匀",
+      "步骤 4: 验证卡片内容（头像、名字、简介、标签、数据）布局合理",
+      "步骤 5: 验证无内容溢出或截断问题"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "角色详情页布局：头像+信息+操作按钮层次分明",
+    "steps": [
+      "步骤 1: 访问角色详情页",
+      "步骤 2: 验证封面图在顶部大图展示",
+      "步骤 3: 验证头像在封面图上叠加",
+      "步骤 4: 验证名字、关系类型、创建者信息排列清晰",
+      "步骤 5: 验证操作按钮区域醒目且不拥挤"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "创建角色表单布局：表单字段排列清晰，操作引导明确",
+    "steps": [
+      "步骤 1: 访问创建角色页面",
+      "步骤 2: 验证表单分区明确（基本信息、性格设定、高级设定、音色设定）",
+      "步骤 3: 验证必填字段有星号标记",
+      "步骤 4: 验证字段标签和输入框对齐",
+      "步骤 5: 验证底部操作按钮（保存草稿/发布）位置合理"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "聊天页面布局：头部信息+消息流+底部输入区三段布局",
+    "steps": [
+      "步骤 1: 进入聊天页面",
+      "步骤 2: 验证顶部显示角色头像+名字+状态，右侧语音通话按钮",
+      "步骤 3: 验证中间消息区域可滚动",
+      "步骤 4: 验证底部输入区固定，包含输入框+发送+语音+附件按钮",
+      "步骤 5: 验证三个区域间距和比例合理"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "语音通话页面布局：全屏居中、控制按钮底部排列",
+    "steps": [
+      "步骤 1: 进入语音通话页面",
+      "步骤 2: 验证角色头像（200px）居中显示",
+      "步骤 3: 验证头像下方显示名字和通话时长",
+      "步骤 4: 验证实时字幕在中间区域",
+      "步骤 5: 验证控制按钮在底部水平排列",
+      "步骤 6: 验证挂断按钮为红色醒目样式"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "音色管理页面布局：音色卡片列表和创建流程清晰",
+    "steps": [
+      "步骤 1: 访问音色管理页面",
+      "步骤 2: 验证预设和自定义音色分区显示",
+      "步骤 3: 验证音色卡片包含名字、语言、类型、试听按钮",
+      "步骤 4: 验证创建新音色按钮醒目"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "设置页面布局：Tab 分组清晰，设置项排列合理",
+    "steps": [
+      "步骤 1: 访问设置页面",
+      "步骤 2: 验证 Tab 导航（账号、外观、语音、模型、通知、数据）",
+      "步骤 3: 验证每个 Tab 内设置项分组清晰",
+      "步骤 4: 验证开关、滑块、选择器等控件样式统一"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "个人中心页面布局：个人信息+统计+收藏层次分明",
+    "steps": [
+      "步骤 1: 访问个人中心",
+      "步骤 2: 验证顶部显示头像、昵称、简介",
+      "步骤 3: 验证统计数据卡片展示（角色数、对话数、点赞数）",
+      "步骤 4: 验证收藏角色区域展示合理"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "语音消息波形样式：波形 SVG 和播放按钮美观",
+    "steps": [
+      "步骤 1: 查看聊天中的语音消息",
+      "步骤 2: 验证显示深色背景的波形条",
+      "步骤 3: 验证有播放/暂停按钮",
+      "步骤 4: 验证显示时长标签",
+      "步骤 5: 验证播放时波形有进度动画"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "模态框样式：居中显示、遮罩层、关闭按钮",
+    "steps": [
+      "步骤 1: 触发一个模态框（如删除确认）",
+      "步骤 2: 验证模态框居中显示",
+      "步骤 3: 验证有半透明遮罩层",
+      "步骤 4: 验证有关闭按钮（X 或取消）",
+      "步骤 5: 验证点击遮罩层可关闭"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "波形可视化样式：语音通话中实时 Canvas 波形美观",
+    "steps": [
+      "步骤 1: 进入语音通话",
+      "步骤 2: 说话时验证显示声音波形",
+      "步骤 3: 验证波形颜色使用主题色",
+      "步骤 4: 验证波形动画流畅（实时 Canvas 绘制）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "登录/注册页面样式：居中卡片、品牌元素、表单美观",
+    "steps": [
+      "步骤 1: 访问登录页面",
+      "步骤 2: 验证登录表单居中显示在卡片内",
+      "步骤 3: 验证显示 SoulMate Logo",
+      "步骤 4: 验证输入框、按钮样式统一",
+      "步骤 5: 验证注册页面样式与登录一致"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "空状态样式：无数据时的插图和引导文字",
+    "steps": [
+      "步骤 1: 查看无角色时的首页",
+      "步骤 2: 验证显示引导插图或图标",
+      "步骤 3: 验证引导文字清晰（'还没有角色，快去创建一个吧'）",
+      "步骤 4: 验证有快捷操作按钮"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "下拉菜单样式：菜单项排列整齐、hover 高亮",
+    "steps": [
+      "步骤 1: 打开用户头像下拉菜单",
+      "步骤 2: 验证菜单有阴影和圆角",
+      "步骤 3: 验证菜单项 hover 时背景高亮",
+      "步骤 4: 验证菜单出现有微小的动画"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "表单错误状态样式：错误信息红色显示、输入框红色边框",
+    "steps": [
+      "步骤 1: 提交空的必填表单",
+      "步骤 2: 验证必填字段输入框变为红色边框",
+      "步骤 3: 验证错误提示文字为红色",
+      "步骤 4: 验证错误图标显示（如感叹号）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "滚动条样式：自定义滚动条样式（非系统默认）",
+    "steps": [
+      "步骤 1: 查看长列表页面",
+      "步骤 2: 验证滚动条为细条样式",
+      "步骤 3: 验证滚动条颜色与主题匹配",
+      "步骤 4: 验证 hover 时滚动条变宽"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "响应式角色卡片：不同屏幕宽度下卡片列数自适应",
+    "steps": [
+      "步骤 1: 桌面端验证 3-4 列卡片",
+      "步骤 2: 平板端验证 2 列卡片",
+      "步骤 3: 手机端验证 1 列卡片",
+      "步骤 4: 验证不同宽度下卡片内容完整显示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "无控制台错误：所有页面浏览器控制台无 JS 错误",
+    "steps": [
+      "步骤 1: 打开浏览器开发者工具 Console",
+      "步骤 2: 依次访问所有页面",
+      "步骤 3: 执行主要操作（注册、创建角色、聊天等）",
+      "步骤 4: 验证 Console 无红色 error 信息"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "加载状态一致性：所有数据加载使用统一的加载组件",
+    "steps": [
+      "步骤 1: 观察不同页面的加载状态",
+      "步骤 2: 验证列表页使用骨架屏",
+      "步骤 3: 验证按钮提交使用 spinner",
+      "步骤 4: 验证样式风格统一"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "文档上传区域样式：拖拽上传区域虚线边框、图标引导",
+    "steps": [
+      "步骤 1: 查看知识库文档上传区域",
+      "步骤 2: 验证虚线边框区域",
+      "步骤 3: 验证中间有上传图标和引导文字",
+      "步骤 4: 验证拖拽文件进入时边框高亮变色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "聊天底部输入区样式：按钮图标清晰、排列紧凑",
+    "steps": [
+      "步骤 1: 查看聊天页面底部输入区",
+      "步骤 2: 验证文字输入框占主要宽度",
+      "步骤 3: 验证发送按钮颜色醒目",
+      "步骤 4: 验证语音/图片/附件按钮图标清晰",
+      "步骤 5: 验证按钮排列紧凑但不拥挤"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "状态色正确应用：成功绿色、警告黄色、错误红色、信息蓝色",
+    "steps": [
+      "步骤 1: 触发成功操作验证绿色 #10B981",
+      "步骤 2: 触发警告验证黄色 #F59E0B",
+      "步骤 3: 触发错误验证红色 #EF4444",
+      "步骤 4: 触发信息提示验证蓝色 #3B82F6"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "工具调用卡片样式：折叠卡片展示清晰、可展开",
+    "steps": [
+      "步骤 1: 触发 AI 工具调用",
+      "步骤 2: 验证显示折叠卡片（图标 + '正在查询...'）",
+      "步骤 3: 验证卡片有圆角和背景色区分",
+      "步骤 4: 点击展开验证详情信息显示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "训练进度条样式：音色训练进度条美观且信息清晰",
+    "steps": [
+      "步骤 1: 查看训练中的音色",
+      "步骤 2: 验证显示进度条",
+      "步骤 3: 验证进度条有百分比显示",
+      "步骤 4: 验证显示预计剩余时间",
+      "步骤 5: 验证进度条使用主题色渐变"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "语音通话控制按钮样式：圆形按钮、图标清晰、挂断醒目",
+    "steps": [
+      "步骤 1: 进入语音通话页面",
+      "步骤 2: 验证控制按钮为圆形",
+      "步骤 3: 验证静音/扬声器/暂停按钮样式一致",
+      "步骤 4: 验证挂断按钮为红色背景、更大尺寸",
+      "步骤 5: 验证按钮 hover/active 有反馈效果"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "知识库统计信息样式：文档数、分块数、存储大小卡片展示",
+    "steps": [
+      "步骤 1: 查看知识库管理页面",
+      "步骤 2: 验证统计信息以卡片形式展示",
+      "步骤 3: 验证数字突出显示、标签文字较小",
+      "步骤 4: 验证卡片间距均匀"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "分类 Tab 样式：发现页顶部 Tab 选中态和 hover 态",
+    "steps": [
+      "步骤 1: 查看发现页顶部 Tab",
+      "步骤 2: 验证选中 Tab 有下划线或背景高亮",
+      "步骤 3: 验证未选中 Tab hover 有效果",
+      "步骤 4: 验证 Tab 切换有过渡动画"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "标签云样式：发现页标签云大小、颜色有层次",
+    "steps": [
+      "步骤 1: 查看发现页标签云区域",
+      "步骤 2: 验证热门标签字体较大",
+      "步骤 3: 验证标签可点击有 hover 效果",
+      "步骤 4: 验证选中标签高亮显示"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "音频波形预览样式：上传音频后的波形可视化",
+    "steps": [
+      "步骤 1: 在音色创建流程中上传音频",
+      "步骤 2: 验证显示音频波形预览",
+      "步骤 3: 验证波形颜色使用主题色",
+      "步骤 4: 验证有播放控制和时间轴"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "侧边栏对话列表样式：对话项 hover 高亮、活跃项标记",
+    "steps": [
+      "步骤 1: 查看聊天页面侧边栏对话列表",
+      "步骤 2: 验证每个对话项显示角色头像+名字+最后消息摘要",
+      "步骤 3: 验证当前活跃对话背景高亮",
+      "步骤 4: 验证 hover 时有背景变化"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "在线状态指示器样式：聊天顶部角色在线状态圆点",
+    "steps": [
+      "步骤 1: 进入聊天页面",
+      "步骤 2: 验证角色头像旁显示绿色小圆点（在线）",
+      "步骤 3: 验证圆点大小合适（约 10px）",
+      "步骤 4: 验证圆点有白色边框与头像区分"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "底部 Tab 导航样式（移动端）：图标+文字、选中高亮",
+    "steps": [
+      "步骤 1: 在手机宽度下查看底部 Tab",
+      "步骤 2: 验证 5 个 Tab 均匀排列（首页、发现、创建、消息、我的）",
+      "步骤 3: 验证每个 Tab 有图标和文字标签",
+      "步骤 4: 验证选中 Tab 图标和文字使用主题色",
+      "步骤 5: 验证创建按钮使用特殊样式（如加号圆形按钮）"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整角色生命周期：从创建到发布到被他人使用的全流程",
+    "steps": [
+      "步骤 1: 用户 A 注册并登录",
+      "步骤 2: 创建角色（填写名字、性格、背景故事、开场白）",
+      "步骤 3: 上传角色头像和封面图",
+      "步骤 4: 选择并绑定音色",
+      "步骤 5: 创建知识库并上传一个文档",
+      "步骤 6: 为角色启用天气查询工具",
+      "步骤 7: 发布角色到社区",
+      "步骤 8: 用户 B 注册并登录",
+      "步骤 9: 用户 B 在发现页找到该角色",
+      "步骤 10: 用户 B 点赞并开始与该角色聊天",
+      "步骤 11: 验证角色回复符合设定的性格和开场白",
+      "步骤 12: 验证知识库增强的回答正确",
+      "步骤 13: 验证工具调用正常",
+      "步骤 14: 用户 B 克隆该角色到自己名下"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整语音通话流程：从发起到通话到结束的全链路",
+    "steps": [
+      "步骤 1: 创建角色并绑定音色",
+      "步骤 2: 创建对话",
+      "步骤 3: 在聊天页面点击语音通话按钮",
+      "步骤 4: 验证进入全屏通话界面",
+      "步骤 5: 验证麦克风权限弹窗并授权",
+      "步骤 6: 对着麦克风说话",
+      "步骤 7: 验证实时字幕显示识别的文字",
+      "步骤 8: 验证 AI 状态从 listening 切换到 thinking",
+      "步骤 9: 验证 AI 开始语音回复，状态切换到 speaking",
+      "步骤 10: 验证波形可视化显示",
+      "步骤 11: 在 AI 说话时打断（开始说话）",
+      "步骤 12: 验证 AI 语音停止，回到 listening",
+      "步骤 13: 点击挂断按钮",
+      "步骤 14: 验证显示通话摘要",
+      "步骤 15: 验证通话内容已保存到消息历史"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整音色复刻流程（训练模式）：从上传到训练到使用",
+    "steps": [
+      "步骤 1: 导航到音色管理页面",
+      "步骤 2: 点击创建新音色",
+      "步骤 3: 输入音色名称和选择语言",
+      "步骤 4: 上传 60 秒参考音频",
+      "步骤 5: 验证音频波形预览",
+      "步骤 6: 选择'训练复刻'方式",
+      "步骤 7: 点击开始训练",
+      "步骤 8: 验证显示训练进度条",
+      "步骤 9: 等待训练完成（轮询状态）",
+      "步骤 10: 训练完成后试听合成效果",
+      "步骤 11: 保存音色",
+      "步骤 12: 将音色绑定到角色",
+      "步骤 13: 发起语音通话验证使用新音色"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整知识库 RAG 流程：从创建到文档上传到对话增强",
+    "steps": [
+      "步骤 1: 创建角色",
+      "步骤 2: 导航到角色知识库管理页面",
+      "步骤 3: 创建知识库",
+      "步骤 4: 上传包含特定信息的 PDF 文档",
+      "步骤 5: 等待文档处理完成",
+      "步骤 6: 在搜索框测试查询，验证相关片段",
+      "步骤 7: 上传第二个 TXT 文档",
+      "步骤 8: 等待处理完成",
+      "步骤 9: 创建对话并提问文档中的具体信息",
+      "步骤 10: 验证 AI 回复引用了知识库内容",
+      "步骤 11: 删除一个文档",
+      "步骤 12: 验证对应内容不再被检索到"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整 Function Call 工具流程：从创建工具到绑定到调用",
+    "steps": [
+      "步骤 1: 创建角色",
+      "步骤 2: 导航到角色工具管理页面",
+      "步骤 3: 启用内置天气查询工具",
+      "步骤 4: 启用内置计算器工具",
+      "步骤 5: 创建一个自定义工具（定义名称、描述、参数）",
+      "步骤 6: 启用自定义工具",
+      "步骤 7: 创建对话",
+      "步骤 8: 发送 '北京今天天气如何？'",
+      "步骤 9: 验证天气工具被调用并返回结果",
+      "步骤 10: 发送 '帮我算一下 888 乘以 999'",
+      "步骤 11: 验证计算器工具被调用并返回正确结果",
+      "步骤 12: 发送触发自定义工具的请求，验证调用"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整用户注册到使用全流程：新用户从零开始体验",
+    "steps": [
+      "步骤 1: 访问应用首页（未登录状态）",
+      "步骤 2: 点击注册",
+      "步骤 3: 填写注册信息并提交",
+      "步骤 4: 验证自动登录到首页",
+      "步骤 5: 查看空状态引导",
+      "步骤 6: 点击创建角色",
+      "步骤 7: 使用模板快速创建一个角色",
+      "步骤 8: 验证角色出现在首页",
+      "步骤 9: 开始与角色聊天",
+      "步骤 10: 验证收到角色开场白",
+      "步骤 11: 发送消息并收到回复"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "社区发现页完整交互流程：浏览、搜索、筛选、点赞、克隆",
+    "steps": [
+      "步骤 1: 导航到发现页",
+      "步骤 2: 浏览热门角色（默认排序）",
+      "步骤 3: 切换到'最新'Tab",
+      "步骤 4: 点击标签筛选",
+      "步骤 5: 在搜索栏输入关键词搜索",
+      "步骤 6: 点击一个角色进入详情",
+      "步骤 7: 点赞角色",
+      "步骤 8: 点击'开始聊天'",
+      "步骤 9: 返回详情页点击'克隆'",
+      "步骤 10: 在我的角色列表验证克隆成功",
+      "步骤 11: 点击创建者名字查看其他作品"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整设置修改流程：修改所有设置项并验证生效",
+    "steps": [
+      "步骤 1: 导航到设置页面",
+      "步骤 2: 修改主题为深色模式，验证立即生效",
+      "步骤 3: 调整字体大小，验证页面文字变化",
+      "步骤 4: 切换默认 LLM 模型",
+      "步骤 5: 调整 TTS 语速",
+      "步骤 6: 切换 ASR 语言",
+      "步骤 7: 修改密码",
+      "步骤 8: 更新个人资料（头像、昵称、简介）",
+      "步骤 9: 刷新页面验证所有设置持久化",
+      "步骤 10: 退出并用新密码重新登录",
+      "步骤 11: 验证所有设置仍然正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "多轮复杂对话测试：包含文字、语音、工具调用、知识库的混合对话",
+    "steps": [
+      "步骤 1: 创建全功能角色（绑定音色、知识库、工具）",
+      "步骤 2: 创建对话",
+      "步骤 3: 发送文字消息，验证收到流式回复",
+      "步骤 4: 发送语音消息，验证识别并收到文字+语音回复",
+      "步骤 5: 提问知识库相关问题，验证 RAG 增强回复",
+      "步骤 6: 触发工具调用，验证工具卡片和结果",
+      "步骤 7: 切换到语音通话模式",
+      "步骤 8: 进行语音对话",
+      "步骤 9: 验证对话上下文在模式切换间保持",
+      "步骤 10: 结束通话验证消息历史完整",
+      "步骤 11: 重新生成最后一条回复验证功能正常"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色个性化差异测试：不同性格的角色回复风格明显不同",
+    "steps": [
+      "步骤 1: 创建角色 A：温柔体贴型（性格模板）",
+      "步骤 2: 创建角色 B：高冷傲娇型（性格模板）",
+      "步骤 3: 创建角色 C：搞笑幽默型（性格模板）",
+      "步骤 4: 分别与三个角色对话，发送相同的消息 '你好呀'",
+      "步骤 5: 验证角色 A 回复温柔亲切",
+      "步骤 6: 验证角色 B 回复冷淡简短",
+      "步骤 7: 验证角色 C 回复幽默搞笑",
+      "步骤 8: 发送 '你喜欢我吗'，验证三个角色回复差异",
+      "步骤 9: 发送 '我今天很难过'，验证三个角色安慰方式不同",
+      "步骤 10: 验证每个角色的回复都保持人设一致性"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "并发用户隔离测试：多个用户同时使用互不干扰",
+    "steps": [
+      "步骤 1: 用户 A 和用户 B 分别注册登录",
+      "步骤 2: 用户 A 创建角色，验证用户 B 看不到（草稿状态）",
+      "步骤 3: 用户 A 发布角色",
+      "步骤 4: 用户 B 在发现页看到该角色",
+      "步骤 5: 用户 A 和用户 B 同时与该角色聊天",
+      "步骤 6: 验证两人的对话独立（互不影响）",
+      "步骤 7: 验证用户 A 的设置不影响用户 B",
+      "步骤 8: 验证用户 B 无法编辑用户 A 的角色",
+      "步骤 9: 验证用户 A 无法查看用户 B 的对话",
+      "步骤 10: 两人同时点赞同一角色验证计数正确"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "音色切换和对比测试：同一角色切换不同音色后效果不同",
+    "steps": [
+      "步骤 1: 创建角色并绑定预设女声音色",
+      "步骤 2: 发起语音通话，记录 AI 语音特征",
+      "步骤 3: 挂断通话",
+      "步骤 4: 编辑角色，切换到预设男声音色",
+      "步骤 5: 再次发起语音通话",
+      "步骤 6: 验证 AI 语音明显变为男声",
+      "步骤 7: 切换到自定义克隆音色",
+      "步骤 8: 验证语音风格再次变化",
+      "步骤 9: 使用试听功能对比三种音色",
+      "步骤 10: 验证切换音色不影响对话内容和性格"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "对话恢复和持久化测试：关闭浏览器后重新打开对话不丢失",
+    "steps": [
+      "步骤 1: 创建角色并进行多轮对话（10+ 条消息）",
+      "步骤 2: 记录所有消息内容",
+      "步骤 3: 关闭浏览器 Tab",
+      "步骤 4: 重新打开应用并登录",
+      "步骤 5: 导航到对话列表",
+      "步骤 6: 打开之前的对话",
+      "步骤 7: 验证所有消息完整保留",
+      "步骤 8: 验证消息顺序正确",
+      "步骤 9: 继续对话，验证上下文保持",
+      "步骤 10: 验证 AI 记得之前的对话内容"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "多种文件格式上传测试：头像、音频、文档等不同类型文件",
+    "steps": [
+      "步骤 1: 上传 JPG 头像图片",
+      "步骤 2: 上传 PNG 头像图片",
+      "步骤 3: 上传 MP3 参考音频",
+      "步骤 4: 上传 WAV 参考音频",
+      "步骤 5: 上传 M4A 参考音频",
+      "步骤 6: 上传 PDF 文档到知识库",
+      "步骤 7: 上传 TXT 文档到知识库",
+      "步骤 8: 上传 MD 文档到知识库",
+      "步骤 9: 上传 DOCX 文档到知识库",
+      "步骤 10: 验证所有文件类型处理成功"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色创建高级设定完整测试：系统提示词、对话示例、变量插值",
+    "steps": [
+      "步骤 1: 进入创建角色页面",
+      "步骤 2: 展开高级设定区域",
+      "步骤 3: 编辑系统提示词，使用变量插值 {user_name}",
+      "步骤 4: 设置开场白 '你好 {user_name}，我是小雪~'",
+      "步骤 5: 添加对话示例（Few-shot 示例）",
+      "步骤 6: 保存角色",
+      "步骤 7: 创建对话",
+      "步骤 8: 验证开场白中变量被正确替换",
+      "步骤 9: 验证对话风格符合示例",
+      "步骤 10: 编辑系统提示词并重新测试"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "发现页无限滚动加载测试：滚动到底部自动加载更多",
+    "steps": [
+      "步骤 1: 创建并发布 30+ 个角色",
+      "步骤 2: 导航到发现页",
+      "步骤 3: 验证首次加载显示一批角色（如 12 个）",
+      "步骤 4: 滚动到页面底部",
+      "步骤 5: 验证触发加载动画",
+      "步骤 6: 验证新一批角色追加显示",
+      "步骤 7: 继续滚动加载更多",
+      "步骤 8: 验证所有角色最终都能加载",
+      "步骤 9: 验证没有重复角色",
+      "步骤 10: 验证加载完所有角色后不再触发加载"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "WebSocket 断线重连测试：网络波动后自动恢复连接",
+    "steps": [
+      "步骤 1: 建立语音通话 WebSocket 连接",
+      "步骤 2: 正常进行语音通话",
+      "步骤 3: 模拟网络断开",
+      "步骤 4: 验证显示连接断开提示",
+      "步骤 5: 恢复网络",
+      "步骤 6: 验证自动尝试重连",
+      "步骤 7: 验证重连成功后通话恢复",
+      "步骤 8: 验证不丢失通话上下文"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SSE 流式响应中断和恢复：停止生成和重新生成",
+    "steps": [
+      "步骤 1: 发送消息触发 AI 长回复",
+      "步骤 2: 在回复生成过程中点击停止",
+      "步骤 3: 验证回复停止在当前位置",
+      "步骤 4: 验证已生成的部分内容保留",
+      "步骤 5: 点击重新生成",
+      "步骤 6: 验证新的回复从头开始",
+      "步骤 7: 等待完整回复",
+      "步骤 8: 验证新回复替换了之前的部分回复"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "角色多对话管理：一个角色可以有多个独立对话",
+    "steps": [
+      "步骤 1: 创建一个角色",
+      "步骤 2: 创建对话 A 并发送几条消息",
+      "步骤 3: 创建对话 B 并发送不同的消息",
+      "步骤 4: 切换回对话 A，验证消息历史独立",
+      "步骤 5: 切换到对话 B，验证消息历史独立",
+      "步骤 6: 在对话 A 中问 '我们之前聊了什么'",
+      "步骤 7: 验证回复只涉及对话 A 的内容",
+      "步骤 8: 删除对话 A，验证对话 B 不受影响"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "完整浅色模式视觉审查：所有页面浅色模式下美观专业",
+    "steps": [
+      "步骤 1: 切换到浅色模式",
+      "步骤 2: 审查首页布局和配色",
+      "步骤 3: 审查发现页卡片展示",
+      "步骤 4: 审查角色详情页",
+      "步骤 5: 审查创建角色页面表单",
+      "步骤 6: 审查聊天页面消息气泡",
+      "步骤 7: 审查设置页面",
+      "步骤 8: 审查个人中心页面",
+      "步骤 9: 验证所有页面无配色突兀、文字难读的问题",
+      "步骤 10: 验证整体风格一致且专业"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "完整深色模式视觉审查：所有页面深色模式下美观无问题",
+    "steps": [
+      "步骤 1: 切换到深色模式",
+      "步骤 2: 审查首页布局和配色",
+      "步骤 3: 审查发现页卡片展示",
+      "步骤 4: 审查角色详情页",
+      "步骤 5: 审查创建角色页面表单",
+      "步骤 6: 审查聊天页面消息气泡",
+      "步骤 7: 审查语音通话页面",
+      "步骤 8: 审查设置页面",
+      "步骤 9: 验证所有页面深色背景上文字清晰可读",
+      "步骤 10: 验证无白色闪烁或配色不一致的问题"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "完整手机端响应式审查：所有页面在 375px 宽度下正确显示",
+    "steps": [
+      "步骤 1: 设置浏览器宽度为 375px（iPhone SE）",
+      "步骤 2: 审查首页布局（单栏、底部 Tab）",
+      "步骤 3: 审查发现页卡片（单列显示）",
+      "步骤 4: 审查创建角色表单（全宽输入框）",
+      "步骤 5: 审查聊天页面（消息气泡不溢出）",
+      "步骤 6: 审查语音通话页面（控制按钮位置合理）",
+      "步骤 7: 审查设置页面（Tab 可滚动）",
+      "步骤 8: 验证无水平滚动条",
+      "步骤 9: 验证所有按钮可点击（不被遮挡）",
+      "步骤 10: 验证文字不被截断"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "完整对话管理流程：创建、切换、重命名、置顶、归档、搜索、删除",
+    "steps": [
+      "步骤 1: 创建 3 个不同角色的对话",
+      "步骤 2: 在对话列表中切换对话，验证内容切换正确",
+      "步骤 3: 重命名一个对话标题",
+      "步骤 4: 置顶一个对话，验证排到列表最前",
+      "步骤 5: 归档一个对话，验证从主列表隐藏",
+      "步骤 6: 在搜索框输入关键词，验证过滤对话列表",
+      "步骤 7: 清空一个对话的消息，验证消息被清空",
+      "步骤 8: 删除一个对话，验证确认弹窗",
+      "步骤 9: 确认删除后验证对话消失",
+      "步骤 10: 验证剩余对话不受影响",
+      "步骤 11: 刷新页面验证所有变更持久化"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "完整动画和交互审查：所有动画流畅且符合规范",
+    "steps": [
+      "步骤 1: 页面切换验证 fade+slide 过渡 (200ms)",
+      "步骤 2: 发送消息验证消息滑入动画 (300ms)",
+      "步骤 3: AI 回复前验证打字指示器三点跳动",
+      "步骤 4: 进入语音通话验证头像呼吸灯脉冲",
+      "步骤 5: 角色卡片 hover 验证 scale+shadow 过渡",
+      "步骤 6: 数据加载验证骨架屏 shimmer 动画",
+      "步骤 7: 操作成功验证 Toast 从顶部滑入",
+      "步骤 8: 打开模态框验证弹出动画",
+      "步骤 9: 侧边栏展开/收起验证过渡动画",
+      "步骤 10: 验证所有动画无卡顿、无闪烁"
+    ],
+    "passes": false
+  }
+]

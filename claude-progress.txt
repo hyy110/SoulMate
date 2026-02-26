@@ -1,0 +1,36 @@
+# SoulMate 项目进度记录
+
+## 会话 1 — 初始化 (2026-02-26)
+
+### 本次完成的工作
+1. 编写完整的 app_spec.txt（888 行，覆盖所有功能模块）
+2. 创建 feature_list.json（210 个测试用例，153 functional + 57 style，25 个长测试 10+ 步）
+3. 创建 init.sh（Linux/Mac）和 init.ps1（Windows）环境初始化脚本
+4. 搭建完整的后端目录结构（48 个文件）:
+   - FastAPI 入口、配置、数据库连接
+   - 11 个 SQLAlchemy 数据模型
+   - 10 个 API 路由模块
+   - 5 个 Service 服务模块
+   - LangChain Agent 和 4 个内置工具
+5. 搭建完整的前端目录结构（47 个文件）:
+   - React + Vite + TypeScript + Tailwind 配置
+   - 12 个页面组件
+   - 5 组通用组件（Layout、UI、Character、Chat、Voice）
+   - 6 个 API 调用模块
+   - 3 个 Zustand 状态管理 Store
+   - 4 个自定义 Hooks
+6. 初始化 Git 仓库并推送到 https://github.com/hyy110/SoulMate
+
+### 功能通过情况
+- 0/210 tests passing（尚未开始功能实现）
+
+### 下次应该做什么
+1. 安装前后端依赖（运行 init.sh 或 init.ps1）
+2. 从 Phase 1 开始实现：
+   - 优先完成后端数据库连接和迁移（feature #1-3）
+   - 实现用户注册/登录认证系统（feature #4-8）
+   - 实现前端启动和基础路由（feature #80-81）
+3. 确保 PostgreSQL 和 Redis 服务可用
+
+### 当前进度
+0/210 tests passing

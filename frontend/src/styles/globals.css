@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background-light text-text-light dark:bg-background-dark dark:text-text-dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border-light dark:bg-border-dark;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5
+           font-medium text-white shadow-lg shadow-primary-600/25
+           transition-all duration-200
+           hover:bg-gradient-primary-hover hover:shadow-xl hover:shadow-primary-600/30
+           active:scale-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-border-light
+           bg-surface-light px-6 py-2.5 font-medium text-text-light
+           transition-all duration-200
+           hover:bg-gray-50
+           active:scale-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50
+           dark:border-border-dark dark:bg-surface-dark dark:text-text-dark dark:hover:bg-gray-800;
+  }
+
+  .card {
+    @apply rounded-2xl border border-border-light bg-surface-light p-6
+           shadow-sm transition-shadow duration-200
+           hover:shadow-md
+           dark:border-border-dark dark:bg-surface-dark;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-border-light bg-surface-light
+           px-4 py-2.5 text-text-light
+           transition-colors duration-200
+           placeholder:text-text-light-secondary
+           focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20
+           dark:border-border-dark dark:bg-surface-dark dark:text-text-dark
+           dark:placeholder:text-text-dark-secondary dark:focus:border-primary-400;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-gradient-primary bg-clip-text text-transparent;
+  }
+}
