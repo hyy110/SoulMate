@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import type { User } from '../api/auth';
+import type { User, LoginRequest, RegisterRequest } from '../api/auth';
 import { getMe, login as loginApi, register as registerApi } from '../api/auth';
-import type { LoginRequest, RegisterRequest } from '../api/auth';
 
 interface AuthState {
   user: User | null;
@@ -14,9 +13,10 @@ interface AuthState {
   logout: () => void;
   fetchUser: () => Promise<void>;
   setUser: (user: User) => void;
+  initialize: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: localStorage.getItem('access_token'),
   isAuthenticated: !!localStorage.getItem('access_token'),
@@ -25,11 +25,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (data) => {
     set({ isLoading: true });
     try {
-      const tokens = await loginApi(data);
-      localStorage.setItem('access_token', tokens.access_token);
-      localStorage.setItem('refresh_token', tokens.refresh_token);
-      const user = await getMe();
-      set({ user, token: tokens.access_token, isAuthenticated: true });
+      const result = await loginApi(data);
+      localStorage.setItem('access_token', result.tokens.access_token);
+      localStorage.setItem('refresh_token', result.tokens.refresh_token);
+      set({
+        user: result.user,
+        token: result.tokens.access_token,
+        isAuthenticated: true,
+      });
     } finally {
       set({ isLoading: false });
     }
@@ -39,9 +42,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const result = await registerApi(data);
-      localStorage.setItem('access_token', result.access_token);
-      localStorage.setItem('refresh_token', result.refresh_token);
-      set({ user: result.user, token: result.access_token, isAuthenticated: true });
+      localStorage.setItem('access_token', result.tokens.access_token);
+      localStorage.setItem('refresh_token', result.tokens.refresh_token);
+      set({
+        user: result.user,
+        token: result.tokens.access_token,
+        isAuthenticated: true,
+      });
     } finally {
       set({ isLoading: false });
     }
@@ -68,4 +75,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   setUser: (user) => set({ user }),
+
+  initialize: async () => {
+    const token = localStorage.getItem('access_token');
+    if (token && !get().user) {
+      await get().fetchUser();
+    }
+  },
 }));

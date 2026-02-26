@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import AuthGuard from './components/AuthGuard';
 
 const MainLayout = lazy(() => import('./components/Layout/MainLayout'));
 const Home = lazy(() => import('./pages/Home'));
@@ -49,7 +50,9 @@ const routes: RouteObject[] = [
   {
     element: (
       <SuspenseWrapper>
-        <MainLayout />
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
       </SuspenseWrapper>
     ),
     children: [
