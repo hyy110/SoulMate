@@ -1,0 +1,882 @@
+
+  SoulMate — 虚拟伙伴创作分享平台
+
+  
+  构建一个生产级的虚拟女友/男友/朋友创作分享平台。用户可以创建、自定义并分享虚拟角色，
+  通过文字聊天和语音通话与角色实时交流。平台集成语音识别、语音合成、语音复刻、
+  Function Call 工具调用和 RAG 知识库能力，提供沉浸式的虚拟社交体验。
+
+  核心卖点：
+  - 任意创建多个虚拟角色（女友/男友/朋友/自定义关系）
+  - 自定义角色音色（语音复刻）、性格、背景故事
+  - 语音实时通话交流，支持打断和多轮对话
+  - 社区分享与发现优质角色
+  - Function Call 让角色具备真实能力（查天气、设提醒、搜索等）
+  - RAG 知识库让角色拥有专属记忆和知识
+  
+
+  
+  
+  后端采用 Python 技术栈，前端采用 React，大模型框架采用 LangChain。
+
+  
+  Python 3.11+
+  FastAPI（高性能异步 Web 框架）
+  SQLAlchemy + Alembic（ORM + 数据库迁移）
+  PostgreSQL（主数据库）
+  Redis（缓存、会话管理、消息队列）
+  LangChain / LangGraph（大模型编排框架）
+  ChromaDB（向量数据库，用于 RAG 知识库）
+  WebSocket（实时语音/文字通信）
+  Celery（异步任务队列，用于语音训练等耗时任务）
+  MinIO / 本地存储（文件存储：音频、头像等）
+  
+
+  
+  React 18+ with Vite
+  TypeScript
+  Tailwind CSS（样式框架）
+  Zustand（轻量状态管理）
+  React Router v6（路由）
+  React Query / TanStack Query（服务端状态管理）
+  Web Audio API（音频录制与播放）
+  WebSocket（实时通信）
+  Framer Motion（动画）
+  
+
+  
+  FunASR（阿里达摩院，支持实时流式识别，中英文表现优秀）
+  备选：Whisper Streaming / WhisperLiveKit
+  支持 WebSocket 流式传输音频，实时返回识别结果
+  支持语音活动检测（VAD）自动断句
+  
+
+  
+  CosyVoice（阿里通义，支持零样本语音复刻，150ms 低延迟流式合成）
+  备选：GPT-SoVITS（1 分钟样本训练高质量音色）
+  支持流式合成，边生成边播放
+  支持多语言（中/英/日/韩）
+  支持情感控制和语速调节
+  
+
+  
+  GPT-SoVITS（Few-shot 语音复刻，1 分钟样本即可）
+  CosyVoice Zero-shot（5 秒参考音频即可复刻）
+  支持用户上传音频样本训练专属音色
+  训练任务异步执行，完成后通知用户
+  
+
+  
+  LangChain Agent with Tool Calling
+  支持 OpenAI / Claude / 通义千问等多种 LLM
+  自定义 Tool 定义和注册
+  支持流式输出（Streaming）
+  
+
+  
+  LangChain + ChromaDB 向量数据库
+  支持文档上传（PDF、TXT、Markdown、Word）
+  文档自动分块、向量化、索引
+  对话时自动检索相关知识增强回答
+  支持角色专属知识库
+  
+  
+
+  
+  
+  环境变量配置（.env）：
+  - DATABASE_URL：PostgreSQL 连接字符串
+  - REDIS_URL：Redis 连接字符串
+  - LLM_API_KEY：大模型 API Key
+  - LLM_BASE_URL：大模型 API 地址（支持自定义）
+  - LLM_MODEL_NAME：默认模型名称
+  - COSYVOICE_API_URL：CosyVoice 服务地址
+  - FUNASR_API_URL：FunASR 服务地址
+  - MINIO_ENDPOINT：MinIO 存储地址
+  - JWT_SECRET：JWT 签名密钥
+  - CELERY_BROKER_URL：Celery 消息队列地址
+  
+
+  
+  
+  - id (UUID), username, email, password_hash
+  - nickname, avatar_url, bio
+  - gender (enum: male/female/other)
+  - created_at, updated_at, last_login_at
+  - is_active, is_verified
+  - settings (JSON: theme, language, notification_prefs)
+
+  
+  - id (UUID), creator_id (FK -> users)
+  - name, avatar_url, cover_image_url
+  - gender (enum: male/female/other)
+  - relationship_type (enum: girlfriend/boyfriend/friend/custom)
+  - personality (TEXT: 详细性格描述 prompt)
+  - backstory (TEXT: 背景故事)
+  - greeting_message (TEXT: 首次对话的开场白)
+  - system_prompt (TEXT: 完整的角色系统提示词)
+  - voice_id (FK -> voice_profiles, 关联音色)
+  - tags (JSON array: 标签列表)
+  - is_public (是否公开分享)
+  - like_count, chat_count, share_count
+  - status (enum: draft/published/banned)
+  - created_at, updated_at
+
+  
+  - id (UUID), user_id (FK -> users)
+  - character_id (FK -> characters, nullable, 角色专属音色)
+  - name (音色名称)
+  - reference_audio_url (参考音频文件路径)
+  - model_path (训练后的模型路径, nullable)
+  - voice_type (enum: preset/cloned_zeroshot/cloned_trained)
+  - language (enum: zh/en/ja/ko/multi)
+  - status (enum: pending/training/ready/failed)
+  - training_progress (FLOAT: 0.0-1.0)
+  - created_at, updated_at
+
+  
+  - id (UUID), user_id (FK -> users)
+  - character_id (FK -> characters)
+  - title (自动生成或用户自定义)
+  - last_message_at, message_count
+  - is_pinned, is_archived
+  - conversation_mode (enum: text/voice/mixed)
+  - created_at, updated_at
+
+  
+  - id (UUID), conversation_id (FK -> conversations)
+  - role (enum: user/assistant/system/tool)
+  - content (TEXT: 文字内容)
+  - audio_url (音频文件路径, nullable)
+  - message_type (enum: text/voice/image/tool_call/tool_result)
+  - token_count (INT)
+  - metadata (JSON: 额外信息，如 tool_call 详情)
+  - created_at
+
+  
+  - id (UUID), character_id (FK -> characters)
+  - name (知识库名称)
+  - description
+  - document_count, chunk_count
+  - embedding_model (使用的向量化模型)
+  - status (enum: empty/indexing/ready/error)
+  - created_at, updated_at
+
+  
+  - id (UUID), knowledge_base_id (FK -> knowledge_bases)
+  - filename, file_type (enum: pdf/txt/md/docx)
+  - file_url (文件存储路径)
+  - file_size (BIGINT, bytes)
+  - chunk_count
+  - status (enum: pending/processing/indexed/error)
+  - created_at
+
+  
+  - id (UUID), user_id (FK -> users)
+  - name, description
+  - tools (JSON array: 工具定义列表)
+  - is_active
+  - created_at, updated_at
+
+  
+  - id (UUID), user_id (FK -> users)
+  - character_id (FK -> characters)
+  - action (enum: like/unlike/share/report)
+  - created_at
+
+  
+  - id (UUID), user_id (FK -> users)
+  - character_id (FK -> characters)
+  - created_at
+
+  
+  - id (UUID), character_id (FK -> characters)
+  - tag_name (VARCHAR)
+
+  
+
+  
+  
+  
+  POST   /api/auth/register          — 用户注册
+  POST   /api/auth/login             — 用户登录（返回 JWT）
+  POST   /api/auth/logout            — 用户登出
+  POST   /api/auth/refresh           — 刷新 Token
+  GET    /api/auth/me                — 获取当前用户信息
+  PUT    /api/auth/me                — 更新用户资料
+  PUT    /api/auth/me/password       — 修改密码
+  POST   /api/auth/me/avatar         — 上传头像
+  
+
+  
+  GET    /api/characters             — 获取我的角色列表（分页、筛选）
+  POST   /api/characters             — 创建新角色
+  GET    /api/characters/:id         — 获取角色详情
+  PUT    /api/characters/:id         — 更新角色信息
+  DELETE /api/characters/:id         — 删除角色
+  POST   /api/characters/:id/publish — 发布/取消发布角色
+  POST   /api/characters/:id/clone   — 克隆他人公开角色到自己名下
+  GET    /api/characters/:id/stats   — 获取角色统计数据
+  
+
+  
+  GET    /api/explore                     — 发现页：浏览公开角色（分页、排序、筛选）
+  GET    /api/explore/trending            — 热门角色排行
+  GET    /api/explore/newest              — 最新发布角色
+  GET    /api/explore/tags                — 热门标签列表
+  GET    /api/explore/tags/:tag           — 按标签筛选角色
+  GET    /api/explore/search?q=keyword    — 搜索角色
+  POST   /api/characters/:id/like        — 点赞角色
+  DELETE /api/characters/:id/like        — 取消点赞
+  GET    /api/users/:id/characters       — 查看某用户公开角色
+  
+
+  
+  GET    /api/conversations                    — 获取对话列表
+  POST   /api/conversations                    — 创建新对话（指定角色）
+  GET    /api/conversations/:id                — 获取对话详情
+  PUT    /api/conversations/:id                — 更新对话信息（重命名、置顶等）
+  DELETE /api/conversations/:id                — 删除对话
+  GET    /api/conversations/:id/messages       — 获取对话消息（分页、游标）
+  POST   /api/conversations/:id/messages       — 发送文字消息（流式返回 SSE）
+  DELETE /api/conversations/:id/messages/:mid  — 删除消息
+  POST   /api/conversations/:id/regenerate     — 重新生成最后一条回复
+  POST   /api/conversations/:id/clear          — 清空对话历史
+  
+
+  
+  WebSocket /api/voice/ws/:conversation_id  — 语音通话 WebSocket 连接
+
+  WebSocket 消息协议：
+  - Client -> Server:
+    - { type: "audio_chunk", data: base64_audio }        — 发送音频片段
+    - { type: "start_recording" }                         — 开始录音
+    - { type: "stop_recording" }                          — 停止录音
+    - { type: "interrupt" }                               — 打断 AI 说话
+    - { type: "config", sample_rate, format }             — 配置音频参数
+
+  - Server -> Client:
+    - { type: "transcription", text, is_final }           — ASR 识别结果
+    - { type: "ai_text", text, is_final }                 — AI 回复文字（流式）
+    - { type: "ai_audio", data: base64_audio, is_final }  — AI 回复音频（流式）
+    - { type: "status", status: "listening/thinking/speaking" } — 状态变更
+    - { type: "error", message }                          — 错误信息
+  
+
+  
+  GET    /api/voices                    — 获取音色列表（预设 + 自定义）
+  POST   /api/voices                    — 创建新音色（上传参考音频）
+  GET    /api/voices/:id                — 获取音色详情
+  DELETE /api/voices/:id                — 删除自定义音色
+  POST   /api/voices/:id/train          — 启动音色训练任务
+  GET    /api/voices/:id/train/status   — 查询训练进度
+  POST   /api/voices/preview            — 试听音色（输入文本，返回合成音频）
+  GET    /api/voices/presets             — 获取系统预设音色列表
+  
+
+  
+  GET    /api/characters/:id/knowledge-base              — 获取角色知识库
+  POST   /api/characters/:id/knowledge-base              — 创建知识库
+  DELETE /api/characters/:id/knowledge-base               — 删除知识库
+  GET    /api/knowledge-bases/:id/documents              — 获取文档列表
+  POST   /api/knowledge-bases/:id/documents              — 上传文档
+  DELETE /api/knowledge-bases/:id/documents/:did         — 删除文档
+  POST   /api/knowledge-bases/:id/reindex                — 重建索引
+  GET    /api/knowledge-bases/:id/search?q=query         — 搜索知识库（测试用）
+  
+
+  
+  GET    /api/tools                     — 获取可用工具列表
+  POST   /api/tools                     — 注册自定义工具
+  GET    /api/tools/:id                 — 获取工具详情
+  PUT    /api/tools/:id                 — 更新工具
+  DELETE /api/tools/:id                 — 删除工具
+  GET    /api/tools/builtin             — 获取内置工具列表
+  PUT    /api/characters/:id/tools      — 为角色绑定/解绑工具
+  GET    /api/characters/:id/tools      — 获取角色已绑定的工具
+  
+
+  
+  GET    /api/settings                  — 获取用户设置
+  PUT    /api/settings                  — 更新用户设置
+  GET    /api/settings/llm-models       — 获取可用大模型列表
+  PUT    /api/settings/llm-models       — 设置默认大模型
+  
+
+  
+
+  
+  
+  
+  - 顶部导航栏 + 左侧边栏 + 主内容区
+  - 侧边栏：角色列表 / 对话列表快速切换
+  - 响应式布局：桌面三栏、平板两栏、手机单栏
+  - 底部 Tab 导航（移动端）：首页、发现、创建、消息、我的
+  
+
+  
+  - SoulMate Logo + 标题
+  - 搜索框（全局搜索角色/对话）
+  - 通知铃铛
+  - 用户头像下拉菜单（设置、退出）
+  
+
+  
+  页面路由结构：
+  /                         — 首页（我的角色 + 最近对话）
+  /explore                  — 发现页（浏览公开角色）
+  /explore/:tag             — 标签筛选页
+  /character/create         — 创建角色
+  /character/:id            — 角色详情页（公开视角）
+  /character/:id/edit       — 编辑角色
+  /character/:id/knowledge  — 角色知识库管理
+  /character/:id/tools      — 角色工具管理
+  /chat/:conversationId     — 聊天页面（文字+语音）
+  /voice/:conversationId    — 语音通话全屏页面
+  /profile                  — 个人中心
+  /profile/voices           — 我的音色管理
+  /settings                 — 设置
+  /user/:userId             — 他人主页
+  
+
+  
+
+  
+  
+  
+  我的角色卡片网格（最多显示 6 个，"查看全部"链接）
+  最近对话列表（按时间排序）
+  快捷操作：创建新角色、开始新对话
+  推荐角色轮播（来自社区热门）
+  
+
+  
+  顶部分类 Tab：全部 / 女友 / 男友 / 朋友 / 热门 / 最新
+  标签云（快速筛选）
+  角色卡片瀑布流/网格布局
+  每张卡片展示：头像、名字、简介、标签、点赞数、对话数
+  卡片点击进入角色详情
+  下拉加载更多（无限滚动）
+  搜索栏 + 排序选项（热门/最新/点赞最多）
+  
+
+  
+  角色大头像 + 封面图
+  角色名称、关系类型标签、创建者信息
+  性格描述、背景故事展示
+  标签列表
+  统计数据：点赞数、对话数、分享数
+  操作按钮：开始聊天、语音通话、点赞、分享、克隆
+  创建者自己可见：编辑、删除、发布/取消发布
+  
+
+  
+
+  
+  
+  
+  角色基本信息表单：
+  - 头像上传（支持裁剪）
+  - 封面图上传
+  - 名字输入（必填，2-20 字符）
+  - 性别选择（男/女/其他）
+  - 关系类型选择（女友/男友/朋友/自定义）
+  - 简介（必填，10-500 字符）
+  - 标签选择（最多 5 个，支持自定义标签）
+
+  性格设定：
+  - 性格描述文本域（支持 Markdown，引导用户描述角色的说话风格、
+    语气、口头禅、兴趣爱好、价值观等）
+  - 性格模板快速选择（温柔体贴型、活泼开朗型、高冷傲娇型、
+    知性优雅型、搞笑幽默型等预设模板）
+  - 背景故事文本域
+
+  高级设定：
+  - 系统提示词（System Prompt）编辑器，支持变量插值
+  - 开场白设定（角色首次对话说的第一句话）
+  - 对话示例（Few-shot，帮助模型理解角色风格）
+
+  音色设定：
+  - 从已有音色列表中选择
+  - 或上传新的参考音频创建音色
+  - 试听按钮（输入测试文本，用选中音色合成试听）
+
+  保存为草稿 / 发布
+  
+
+  
+
+  
+  
+  
+  顶部：角色头像 + 名字 + 在线状态指示
+  右上角：语音通话按钮、更多选项（清空记录、删除对话等）
+  中间：消息流
+  - 用户消息：右对齐，主题色气泡
+  - AI 消息：左对齐，带角色头像，浅色气泡
+  - 语音消息：显示波形图 + 时长，点击播放
+  - 工具调用消息：折叠卡片展示（如 "正在查询天气..."）
+  - 时间戳分隔（按日期分组）
+  - 消息加载动画（AI 思考中的打字指示器）
+  底部输入区：
+  - 文字输入框（自动增高，Shift+Enter 换行）
+  - 发送按钮
+  - 语音输入按钮（按住说话 / 点击切换）
+  - 图片发送按钮
+  - 附件按钮
+  
+
+  
+  全屏深色背景
+  中央：角色大头像（带呼吸灯动画表示在线）
+  角色名字 + 通话时长计时器
+  实时波形可视化（双方的声音波形）
+  AI 状态指示：听你说话中... / 思考中... / 说话中...
+  实时字幕显示（ASR 识别结果 + AI 回复文字）
+  控制按钮：
+  - 静音/取消静音
+  - 扬声器/听筒切换
+  - 暂停/继续
+  - 挂断
+  支持打断：用户说话时自动停止 AI 播放
+  通话结束后显示通话摘要（时长、对话内容概要）
+  
+
+  
+
+  
+  
+  
+  音色列表：预设音色 + 我的自定义音色
+  每个音色卡片：名字、语言、类型标签、试听按钮、状态
+  创建新音色流程：
+  1. 输入音色名称
+  2. 选择语言（中文/英文/日文/韩文/多语言）
+  3. 上传参考音频（支持 mp3/wav/m4a，5秒-60秒）
+  4. 音频波形预览和裁剪
+  5. 选择复刻方式：
+     - 零样本复刻（5 秒样本，即时可用，效果一般）
+     - 训练复刻（1 分钟样本，需要等待训练，效果更好）
+  6. 试听合成效果
+  7. 确认保存
+  训练中音色显示进度条和预计剩余时间
+  
+
+  
+
+  
+  
+  
+  文档列表：文件名、类型图标、大小、状态、上传时间
+  上传区域：拖拽上传或点击选择文件
+  支持批量上传
+  文档处理状态：上传中 → 处理中 → 已索引 / 失败
+  搜索测试：输入查询，显示检索到的相关片段
+  重建索引按钮
+  知识库统计：文档数、分块数、存储大小
+  
+
+  
+  可用工具列表（内置 + 自定义）
+  内置工具：
+  - 查询天气
+  - 网络搜索
+  - 设置提醒/闹钟
+  - 日期时间查询
+  - 简单计算
+  - 随机数/抽签
+  开关控制：为角色启用/禁用工具
+  自定义工具创建（高级用户）：
+  - 工具名称和描述
+  - 参数定义（JSON Schema）
+  - 执行逻辑（webhook URL 或内置处理）
+  
+
+  
+
+  
+  
+  
+  个人信息编辑（头像、昵称、简介）
+  我的角色统计（总数、公开数、总对话数、总点赞数）
+  我的收藏角色
+  使用统计（对话次数、语音通话时长等）
+  
+
+  
+  账号设置：修改密码、邮箱
+  外观设置：主题切换（浅色/深色/自动）、字体大小
+  语音设置：
+  - 默认 ASR 语言
+  - TTS 语速（0.5x - 2.0x）
+  - 自动播放语音回复开关
+  模型设置：
+  - 选择默认 LLM（支持多模型切换）
+  - Temperature / Max Tokens 等参数
+  通知设置
+  数据管理：导出数据、清除缓存
+  
+
+  
+
+  
+  
+  
+  - 主题色：渐变紫粉色（#7C3AED → #EC4899），传达温暖、浪漫、亲密感
+  - 背景色：纯白 #FFFFFF（浅色）/ 深灰 #0F172A（深色）
+  - 卡片背景：#F8FAFC（浅色）/ #1E293B（深色）
+  - 文字色：#0F172A（浅色）/ #F1F5F9（深色）
+  - 边框色：#E2E8F0（浅色）/ #334155（深色）
+  - 成功：#10B981  警告：#F59E0B  错误：#EF4444  信息：#3B82F6
+  - 语音通话背景：径向渐变深色 #0F0A1A → #1A0F2E
+  
+
+  
+  - 无衬线系统字体栈：Inter, -apple-system, sans-serif
+  - 标题：font-bold, tracking-tight
+  - 正文：font-normal, leading-relaxed
+  - 代码/技术：JetBrains Mono, Consolas, monospace
+  - 角色名称：font-semibold, text-lg
+  - 消息气泡：text-base (16px), leading-normal
+  
+
+  
+  
+  - 用户消息气泡：主题色渐变背景，白色文字，右对齐，圆角 18px
+  - AI 消息气泡：浅色背景（#F1F5F9），深色文字，左对齐，带角色头像
+  - 语音消息：深色背景 + 波形 SVG + 时长标签 + 播放按钮
+  - 打字指示器：三个点跳动动画
+  
+
+  
+  - 角色卡片：圆角 16px，hover 时 scale(1.02) + 阴影加深
+  - 头像：圆形，64px（列表）/ 120px（详情）/ 200px（通话）
+  - 按钮：圆角 12px，主按钮渐变背景，次按钮边框样式
+  - 输入框：圆角 12px，聚焦时主题色边框 + 外发光
+  - 标签：圆角 9999px（胶囊型），主题色淡背景 + 主题色文字
+  
+
+  
+  - 页面切换：fade + slide 过渡 (200ms)
+  - 消息出现：从底部滑入 + 淡入 (300ms)
+  - 语音通话连接：头像呼吸灯脉冲动画
+  - 波形可视化：实时 Canvas 绘制
+  - 角色卡片 hover：smooth scale + shadow transition (200ms)
+  - 骨架屏加载：shimmer 动画
+  - Toast 通知：从顶部滑入 + 自动消失
+  
+
+  
+
+  
+  
+  
+  1. 用户在聊天页面输入文字或语音
+  2. 文字直接发送 / 语音经 ASR 转为文字
+  3. 后端构建 LangChain Agent：
+     a. 注入角色 system_prompt（性格、背景等）
+     b. 注入对话历史（最近 N 轮）
+     c. 如有知识库，执行 RAG 检索并注入相关上下文
+     d. 绑定角色的 Function Call 工具
+  4. Agent 生成回复（流式输出）
+  5. 如果 Agent 调用了工具，执行工具并将结果返回给 Agent 继续生成
+  6. 最终回复文字通过 SSE/WebSocket 流式推送到前端
+  7. 同时将文字发送给 TTS 服务合成语音
+  8. 合成的音频流式推送到前端播放
+  9. 消息持久化到数据库
+  
+
+  
+  1. 用户点击"语音通话"按钮
+  2. 前端建立 WebSocket 连接到 /api/voice/ws/:conversation_id
+  3. 前端通过 Web Audio API 采集麦克风音频
+  4. 音频片段（PCM/Opus）实时发送到后端
+  5. 后端将音频流传入 FunASR 进行实时识别
+  6. ASR 返回识别文字（中间结果 + 最终结果）
+  7. 最终识别文字进入 LangChain Agent 处理
+  8. Agent 回复文字送入 CosyVoice 流式合成
+  9. 合成音频实时推送到前端播放
+  10. 用户说话时自动检测并打断 AI 播放
+  11. 全程显示实时字幕
+  12. 挂断时保存通话记录
+  
+
+  
+  1. 用户在角色编辑器中选择"创建新音色"
+  2. 上传参考音频（5s-60s 的清晰语音）
+  3. 选择复刻方式（零样本/训练）
+  4. 零样本：直接提取音色特征，即刻可用
+  5. 训练复刻：提交异步训练任务
+     a. 音频预处理（降噪、切分）
+     b. 模型微调训练
+     c. 训练完成通知用户
+  6. 试听合成效果
+  7. 绑定到角色
+  
+
+  
+  1. 用户在角色知识库页面上传文档
+  2. 后端接收文件并异步处理：
+     a. 文档解析（PDF/TXT/MD/DOCX 提取文本）
+     b. 文本分块（RecursiveCharacterTextSplitter）
+     c. 向量化（Embedding 模型）
+     d. 存入 ChromaDB
+  3. 对话时自动检索：
+     a. 将用户消息向量化
+     b. 在 ChromaDB 中检索 top-k 相关片段
+     c. 将检索结果注入到 Agent 的上下文中
+  4. Agent 参考知识库内容生成更准确的回复
+  
+
+  
+  1. 角色绑定了工具（如"查天气"）
+  2. 用户问："今天北京天气怎么样？"
+  3. LangChain Agent 决定调用 get_weather 工具
+  4. 前端收到 tool_call 事件，展示"正在查询天气..."卡片
+  5. 后端执行工具，获取天气数据
+  6. 工具结果返回给 Agent
+  7. Agent 结合工具结果生成自然语言回复
+  8. 流式推送回复到前端
+  
+
+  
+
+  
+  
+  Phase 1：项目基础设施
+  
+  - 初始化 FastAPI 项目结构（目录、配置、日志）
+  - 设置 PostgreSQL 数据库 + SQLAlchemy ORM + Alembic 迁移
+  - 实现用户认证系统（注册、登录、JWT）
+  - 创建基础数据模型（Users、Characters、Conversations、Messages）
+  - 搭建 React 项目（Vite + TypeScript + Tailwind + Router）
+  - 实现前端路由和基础布局组件
+  - 对接前后端 API（Axios 封装、错误处理、Token 管理）
+  
+
+  Phase 2：角色创建与管理
+  
+  - 角色 CRUD API
+  - 角色创建/编辑表单 UI
+  - 头像和封面图上传
+  - 性格模板系统
+  - 角色卡片列表展示
+  - 首页"我的角色"板块
+  
+
+  Phase 3：核心聊天功能
+  
+  - LangChain Agent 集成（对话链、流式输出）
+  - 角色 system prompt 注入
+  - 文字聊天 API（SSE 流式响应）
+  - 聊天 UI（消息气泡、输入框、发送）
+  - 对话历史管理（创建、列表、切换、删除）
+  - 消息持久化与分页加载
+  
+
+  Phase 4：语音能力
+  
+  - FunASR 语音识别集成
+  - CosyVoice 语音合成集成
+  - WebSocket 语音通话通道
+  - 前端音频录制与播放（Web Audio API）
+  - 语音通话全屏 UI
+  - 实时字幕显示
+  - 打断机制（VAD + 状态管理）
+  - 语音消息（录音发送 + 语音回复）
+  
+
+  Phase 5：语音复刻
+  
+  - 音色管理 API
+  - 参考音频上传与处理
+  - 零样本音色复刻（CosyVoice）
+  - 训练复刻任务（Celery 异步 + GPT-SoVITS）
+  - 音色管理 UI（列表、创建、试听、删除）
+  - 训练进度展示
+  
+
+  Phase 6：知识库 RAG
+  
+  - ChromaDB 集成
+  - 文档上传与解析
+  - 文本分块与向量化
+  - RAG 检索集成到 Agent
+  - 知识库管理 UI
+  - 搜索测试功能
+  
+
+  Phase 7：Function Call 工具系统
+  
+  - 内置工具实现（天气、搜索、提醒、计算等）
+  - 工具注册与管理 API
+  - LangChain Tool Calling 集成
+  - 工具调用 UI 展示（调用中卡片、结果展示）
+  - 自定义工具创建（高级）
+  - 角色工具绑定管理
+  
+
+  Phase 8：社区分享与发现
+  
+  - 角色发布与公开接口
+  - 发现页 UI（瀑布流/网格）
+  - 搜索与标签筛选
+  - 点赞与收藏功能
+  - 角色克隆
+  - 用户主页
+  - 热门排行与推荐
+  
+
+  Phase 9：设置与个人中心
+  
+  - 个人中心 UI
+  - 设置页面（外观、语音、模型、通知）
+  - 主题切换（浅色/深色/自动）
+  - 数据导出
+  - 使用统计展示
+  
+
+  Phase 10：打磨与优化
+  
+  - 移动端响应式适配
+  - 性能优化（懒加载、虚拟列表、缓存）
+  - 动画和微交互完善
+  - 错误处理与用户反馈优化
+  - 无障碍访问（Accessibility）
+  - 引导流程（Onboarding）
+  
+
+  
+
+  
+  
+  功能完整性：
+  - 角色创建、编辑、删除、发布全流程可用
+  - 文字聊天流畅、流式输出无卡顿
+  - 语音通话延迟低、打断灵敏
+  - 语音复刻效果相似度高
+  - 知识库检索准确、对回答有明显增强
+  - Function Call 调用正确、展示清晰
+  - 社区功能完整、搜索排序准确
+
+  用户体验：
+  - 界面美观现代，动画流畅
+  - 响应速度快，操作反馈即时
+  - 移动端体验良好
+  - 无控制台错误
+  - 直觉化操作，无需教程即可上手
+
+  代码质量：
+  - 前后端结构清晰、可维护
+  - 完善的错误处理
+  - API 接口规范（RESTful + WebSocket）
+  - 数据库设计合理、查询高效
+  - 环境变量管理安全
+  - 异步任务可靠执行
+  
+
+  
+
+  
+  
+  autonomous-coding/
+  ├── backend/
+  │   ├── alembic/                     # 数据库迁移
+  │   │   └── versions/
+  │   ├── app/
+  │   │   ├── __init__.py
+  │   │   ├── main.py                  # FastAPI 入口
+  │   │   ├── config.py                # 配置管理
+  │   │   ├── database.py              # 数据库连接
+  │   │   ├── models/                  # SQLAlchemy 模型
+  │   │   │   ├── user.py
+  │   │   │   ├── character.py
+  │   │   │   ├── conversation.py
+  │   │   │   ├── message.py
+  │   │   │   ├── voice_profile.py
+  │   │   │   ├── knowledge_base.py
+  │   │   │   └── tool.py
+  │   │   ├── schemas/                 # Pydantic 请求/响应模型
+  │   │   ├── api/                     # API 路由
+  │   │   │   ├── auth.py
+  │   │   │   ├── characters.py
+  │   │   │   ├── conversations.py
+  │   │   │   ├── messages.py
+  │   │   │   ├── voice.py
+  │   │   │   ├── knowledge.py
+  │   │   │   ├── tools.py
+  │   │   │   ├── explore.py
+  │   │   │   └── settings.py
+  │   │   ├── services/                # 业务逻辑层
+  │   │   │   ├── llm_service.py       # LangChain Agent 服务
+  │   │   │   ├── voice_service.py     # ASR + TTS 服务
+  │   │   │   ├── rag_service.py       # 知识库 RAG 服务
+  │   │   │   ├── tool_service.py      # Function Call 工具服务
+  │   │   │   └── storage_service.py   # 文件存储服务
+  │   │   ├── agents/                  # LangChain Agent 定义
+  │   │   │   ├── character_agent.py   # 角色对话 Agent
+  │   │   │   └── tools/               # 内置工具实现
+  │   │   │       ├── weather.py
+  │   │   │       ├── search.py
+  │   │   │       ├── reminder.py
+  │   │   │       └── calculator.py
+  │   │   └── utils/                   # 工具函数
+  │   ├── requirements.txt
+  │   ├── alembic.ini
+  │   └── .env
+  │
+  ├── frontend/
+  │   ├── public/
+  │   ├── src/
+  │   │   ├── main.tsx
+  │   │   ├── App.tsx
+  │   │   ├── router.tsx               # 路由配置
+  │   │   ├── api/                     # API 调用层
+  │   │   │   ├── client.ts            # Axios 实例
+  │   │   │   ├── auth.ts
+  │   │   │   ├── characters.ts
+  │   │   │   ├── conversations.ts
+  │   │   │   ├── voice.ts
+  │   │   │   └── knowledge.ts
+  │   │   ├── stores/                  # Zustand 状态管理
+  │   │   │   ├── authStore.ts
+  │   │   │   ├── chatStore.ts
+  │   │   │   └── voiceStore.ts
+  │   │   ├── components/              # 通用组件
+  │   │   │   ├── Layout/
+  │   │   │   ├── Character/
+  │   │   │   ├── Chat/
+  │   │   │   ├── Voice/
+  │   │   │   └── UI/                  # Button, Input, Modal, Toast 等
+  │   │   ├── pages/                   # 页面组件
+  │   │   │   ├── Home.tsx
+  │   │   │   ├── Explore.tsx
+  │   │   │   ├── CharacterCreate.tsx
+  │   │   │   ├── CharacterDetail.tsx
+  │   │   │   ├── ChatPage.tsx
+  │   │   │   ├── VoiceCall.tsx
+  │   │   │   ├── Profile.tsx
+  │   │   │   └── Settings.tsx
+  │   │   ├── hooks/                   # 自定义 Hooks
+  │   │   │   ├── useAudioRecorder.ts
+  │   │   │   ├── useWebSocket.ts
+  │   │   │   ├── useVoiceCall.ts
+  │   │   │   └── useSSE.ts
+  │   │   ├── utils/                   # 工具函数
+  │   │   └── styles/                  # 全局样式
+  │   ├── index.html
+  │   ├── vite.config.ts
+  │   ├── tailwind.config.js
+  │   ├── tsconfig.json
+  │   └── package.json
+  │
+  ├── prompts/
+  │   ├── app_spec.txt                 # 本文件
+  │   ├── initializer_prompt.md
+  │   └── coding_prompt.md
+  ├── .cursorrules
+  ├── .gitignore
+  ├── progress.py
+  └── README.md
+  
+
