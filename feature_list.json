@@ -8,7 +8,7 @@
       "步骤 3: 访问 http://localhost:8000/docs",
       "步骤 4: 验证 Swagger UI 正常显示"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -18,7 +18,7 @@
       "步骤 2: GET /api/health",
       "步骤 3: 验证返回 200 和 {status: 'ok'}"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -29,7 +29,7 @@
       "步骤 3: 验证所有表已创建（users, characters, voice_profiles, conversations, messages, knowledge_bases, documents, tools, user_actions, favorites, tags）",
       "步骤 4: 验证外键关系正确"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -40,7 +40,7 @@
       "步骤 3: 验证返回 JWT access_token",
       "步骤 4: 验证数据库中用户已创建且密码已哈希"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -51,7 +51,7 @@
       "步骤 3: 再次注册相同 email，验证返回 400",
       "步骤 4: 验证错误信息明确提示重复字段"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -62,7 +62,7 @@
       "步骤 3: 验证返回 200 和有效的 JWT access_token",
       "步骤 4: 用错误密码登录，验证返回 401"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -73,7 +73,7 @@
       "步骤 3: 不携带 Token 访问同一接口，验证返回 401",
       "步骤 4: 携带无效 Token 访问，验证返回 401"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -84,7 +84,7 @@
       "步骤 3: 验证返回新的 access_token",
       "步骤 4: 验证新 Token 可正常访问受保护接口"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -95,7 +95,7 @@
       "步骤 3: 验证返回 200 和更新后的用户信息",
       "步骤 4: GET /api/auth/me 验证信息已持久化"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -106,7 +106,7 @@
       "步骤 3: PUT /api/auth/me/password，body: {old_password: '正确', new_password: '新密码'}，验证返回 200",
       "步骤 4: 用新密码重新登录，验证成功"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

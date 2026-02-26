@@ -32,5 +32,61 @@
    - 实现前端启动和基础路由（feature #80-81）
 3. 确保 PostgreSQL 和 Redis 服务可用
 
+---
+
+## 会话 2 — 环境搭建 + 后端基础功能 (2026-02-26)
+
+### 本次完成的工作
+1. **环境搭建**
+   - 安装 Python 3.12（通过 winget）
+   - 创建后端 venv 并安装核心依赖（FastAPI, SQLAlchemy, Alembic, passlib, python-jose 等）
+   - 安装前端 Node.js 依赖（npm install）
+   - 注意：chromadb 因需要 Visual C++ Build Tools 暂未安装，不影响核心功能
+
+2. **数据库层改造（SQLite 开发兼容）**
+   - 创建 `app/models/types.py`：GUID 和 JSONType 可移植类型
+   - 将所有 11 个模型从 PostgreSQL 专用类型（UUID, JSONB）迁移到可移植类型
+   - 更新 `database.py` 支持 SQLite（check_same_thread, foreign_keys pragma）
+   - 更新 `config.py` 默认使用 SQLite 开发数据库
+   - 更新 `alembic/env.py` 启用 batch mode
+   - 创建 `alembic/script.py.mako` 模板
+   - 生成并运行初始迁移，11 个表全部创建成功
+
+3. **认证系统完整实现**
+   - 创建 `app/security.py`：密码哈希、JWT 创建/验证、当前用户依赖
+   - 完整实现 `app/schemas/auth.py`：注册、登录、Token、用户响应等模型
+   - 完整实现 `app/api/auth.py`：6 个端点
+     - POST /api/auth/register（注册 + JWT 返回）
+     - POST /api/auth/login（登录 + JWT 返回）
+     - POST /api/auth/refresh（Token 刷新）
+     - GET /api/auth/me（获取当前用户信息）
+     - PUT /api/auth/me（更新用户资料）
+     - PUT /api/auth/me/password（修改密码）
+   - 注册 auth router 到 main.py
+
+### 功能通过情况
+- 10/210 tests passing
+- Feature #1: FastAPI 后端服务启动 ✓
+- Feature #2: 健康检查接口 ✓
+- Feature #3: 数据库连接与迁移 ✓
+- Feature #4: 用户注册 ✓
+- Feature #5: 用户注册校验（重复检测）✓
+- Feature #6: 用户登录 ✓
+- Feature #7: JWT Token 认证 ✓
+- Feature #8: Token 刷新 ✓
+- Feature #9: 更新用户资料 ✓
+- Feature #10: 修改密码 ✓
+
+### 发现并修复的问题
+- bcrypt 5.x 与 passlib 1.7.4 不兼容（ValueError: password too long），降级到 bcrypt 4.2.1
+- Alembic 缺少 script.py.mako 模板文件
+- 自动生成的迁移脚本引用 app.models.types 但未 import，手动修复
+
+### 下次应该做什么
+1. 实现上传用户头像功能（Feature #11）—— 需要文件存储方案（本地存储或 MinIO）
+2. 实现角色 CRUD API（Feature #12-18）
+3. 实现前端启动和基础路由（Feature #80-81）
+4. 考虑安装 Visual C++ Build Tools 以启用 ChromaDB
+
 ### 当前进度
-0/210 tests passing
+10/210 tests passing

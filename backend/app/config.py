@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI Character Platform"
     DEBUG: bool = False
 
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/ai_character"
+    DATABASE_URL: str = "sqlite:///./soulmate.db"
 
     REDIS_URL: str = "redis://localhost:6379/0"
 

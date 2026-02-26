@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.api import auth
 
 app = FastAPI(title=settings.APP_NAME, docs_url="/docs", redoc_url="/redoc")
 
@@ -19,8 +20,10 @@ def health_check():
     return {"status": "ok"}
 
 
-# from app.api import auth, characters, conversations, messages, voice, knowledge, tools, explore, settings as settings_api
-# app.include_router(auth.router)
+app.include_router(auth.router)
+
+# TODO: enable remaining routers as they are implemented
+# from app.api import characters, conversations, messages, voice, knowledge, tools, explore, settings as settings_api
 # app.include_router(characters.router)
 # app.include_router(conversations.router)
 # app.include_router(messages.router)
