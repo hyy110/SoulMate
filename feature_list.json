@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "category": "functional",
     "description": "FastAPI 后端服务启动：运行 uvicorn 启动 FastAPI 应用，访问 /docs 能看到 Swagger 文档",
@@ -118,7 +118,7 @@
       "步骤 4: 访问 avatar_url 验证图片可访问",
       "步骤 5: GET /api/auth/me 验证 avatar_url 已更新"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -186,7 +186,7 @@
       "步骤 3: 访问 URL 验证图片可访问",
       "步骤 4: PUT /api/characters/:id 更新图片，验证 URL 更新"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -219,7 +219,7 @@
       "步骤 3: 获取对话消息列表",
       "步骤 4: 验证第一条消息为角色的开场白"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -287,7 +287,7 @@
       "步骤 4: 验证返回分页信息",
       "步骤 5: GET /api/explore?sort=popular，验证按热度排序"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -297,7 +297,7 @@
       "步骤 2: GET /api/explore/trending",
       "步骤 3: 验证结果按热度降序排列"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -307,7 +307,7 @@
       "步骤 2: GET /api/explore/newest",
       "步骤 3: 验证结果顺序为 C、B、A"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -318,7 +318,7 @@
       "步骤 3: 验证只返回角色 A",
       "步骤 4: GET /api/explore/tags 获取热门标签列表"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -329,7 +329,7 @@
       "步骤 3: 验证返回包含小雪",
       "步骤 4: GET /api/explore/search?q=小，验证返回两个角色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -353,7 +353,7 @@
       "步骤 3: 验证只返回 2 个公开角色",
       "步骤 4: 验证不返回草稿角色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -364,7 +364,7 @@
       "步骤 3: 验证返回对话详情包含 id, character_id, title",
       "步骤 4: 验证对话的 conversation_mode 默认为 text"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -375,7 +375,7 @@
       "步骤 3: 验证返回 3 个对话",
       "步骤 4: 验证按 last_message_at 降序排列"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -387,7 +387,7 @@
       "步骤 4: PUT /api/conversations/:id，body: {is_archived: true}，验证归档",
       "步骤 5: 获取对话列表，验证置顶对话排在最前"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -399,7 +399,7 @@
       "步骤 4: GET /api/conversations/:id 验证返回 404",
       "步骤 5: 验证关联消息已被删除"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -411,7 +411,7 @@
       "步骤 4: 验证回复内容符合角色性格",
       "步骤 5: GET /api/conversations/:id/messages 验证消息已持久化（用户消息 + AI 回复）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -423,7 +423,7 @@
       "步骤 4: 验证最后收到 'done' 事件",
       "步骤 5: 拼接所有 text 事件，验证与最终消息一致"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -434,7 +434,7 @@
       "步骤 3: 验证返回最新的 5 条消息",
       "步骤 4: 使用 cursor 参数获取下一页，验证返回更早的消息"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -445,7 +445,7 @@
       "步骤 3: 验证返回 200",
       "步骤 4: 获取消息列表验证该消息已不存在"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -457,7 +457,7 @@
       "步骤 4: 验证返回新的 SSE 流式回复",
       "步骤 5: 验证新回复替换了旧回复"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -468,7 +468,7 @@
       "步骤 3: GET /api/conversations/:id/messages",
       "步骤 4: 验证消息列表为空"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -480,7 +480,7 @@
       "步骤 4: 创建另一个角色，personality 设为 '冷酷、简短回复、不轻易表露感情'",
       "步骤 5: 验证该角色的回复风格明显不同"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -492,7 +492,7 @@
       "步骤 4: 发送 '我叫什么名字？'",
       "步骤 5: 验证 AI 回复中提到 '张三'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -504,7 +504,7 @@
       "步骤 4: 验证连接成功建立",
       "步骤 5: 验证收到 {type: 'status', status: 'listening'}"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -517,7 +517,7 @@
       "步骤 5: 验证收到 {type: 'transcription', text: '...', is_final: false} 中间结果",
       "步骤 6: 验证收到 {type: 'transcription', text: '...', is_final: true} 最终结果"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -529,7 +529,7 @@
       "步骤 4: 验证收到 {type: 'ai_audio', data: base64_audio, is_final: false} 流式音频",
       "步骤 5: 验证最终收到 is_final: true 的消息"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -541,7 +541,7 @@
       "步骤 4: AI 开始回复后，验证收到 status: speaking",
       "步骤 5: AI 说完后，验证回到 status: listening"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -553,7 +553,7 @@
       "步骤 4: 验证 AI 音频停止推送",
       "步骤 5: 验证状态切回 listening"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -565,7 +565,7 @@
       "步骤 4: 验证通话中的文字内容已保存为消息",
       "步骤 5: 验证消息 message_type 标记为 voice"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -576,7 +576,7 @@
       "步骤 3: 创建自定义音色后再次获取",
       "步骤 4: 验证自定义音色也在列表中"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -587,7 +587,7 @@
       "步骤 3: 每个音色包含 id, name, language, voice_type: 'preset'",
       "步骤 4: 验证预设音色覆盖中文和英文"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -598,7 +598,7 @@
       "步骤 3: 验证 status 为 ready（零样本即时可用）",
       "步骤 4: 验证 reference_audio_url 可访问"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -609,7 +609,7 @@
       "步骤 3: 验证音频可正常播放",
       "步骤 4: 验证不同音色合成的音频有明显区别"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -621,7 +621,7 @@
       "步骤 4: 验证音色 status 变为 training",
       "步骤 5: GET /api/voices/:id/train/status 验证返回训练进度"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -816,7 +816,7 @@
       "步骤 3: GET /api/settings 验证设置已更新",
       "步骤 4: 验证不同用户设置互相隔离"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -827,7 +827,7 @@
       "步骤 3: PUT /api/settings/llm-models 切换默认模型",
       "步骤 4: 发送消息验证使用了新选择的模型"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -888,7 +888,7 @@
       "步骤 4: 验证最多显示 6 个，有'查看全部'链接",
       "步骤 5: 点击角色卡片导航到角色详情"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -899,7 +899,7 @@
       "步骤 3: 验证显示最近对话（角色头像、名字、最后一条消息摘要、时间）",
       "步骤 4: 点击对话进入聊天页面"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -918,7 +918,7 @@
       "步骤 11: 验证角色创建成功并跳转到角色详情页",
       "步骤 12: 验证所有填写的信息正确显示"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -931,7 +931,7 @@
       "步骤 5: 验证更新成功",
       "步骤 6: 刷新页面验证修改已持久化"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -944,7 +944,7 @@
       "步骤 5: 验证操作按钮：开始聊天、语音通话、点赞、克隆",
       "步骤 6: 点击'开始聊天'跳转到聊天页面"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -956,7 +956,7 @@
       "步骤 4: 点击不同 Tab 验证筛选生效",
       "步骤 5: 滚动到底部验证无限加载更多角色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -967,7 +967,7 @@
       "步骤 3: 验证搜索结果实时更新",
       "步骤 4: 验证搜索匹配角色名称和简介"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -979,7 +979,7 @@
       "步骤 4: 验证只显示包含该标签的角色",
       "步骤 5: 点击标签取消筛选，验证恢复全部"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -997,7 +997,7 @@
       "步骤 10: 发送第二条消息验证多轮对话",
       "步骤 11: 验证 Shift+Enter 换行而非发送"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1010,7 +1010,7 @@
       "步骤 5: 释放后验证音频发送并转为文字",
       "步骤 6: 验证收到 AI 文字和语音回复"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1022,7 +1022,7 @@
       "步骤 4: 验证卡片可展开查看工具调用详情",
       "步骤 5: 验证工具调用完成后 AI 继续回复"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1119,7 +1119,7 @@
       "步骤 4: 验证显示我的收藏角色",
       "步骤 5: 点击编辑资料验证可修改信息"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1132,7 +1132,7 @@
       "步骤 5: 验证文字大小变化",
       "步骤 6: 刷新页面验证设置持久化"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1157,7 +1157,7 @@
       "步骤 4: 调整 Temperature 和 Max Tokens",
       "步骤 5: 保存设置"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1191,7 +1191,7 @@
       "步骤 4: 验证输入框高度自动增加",
       "步骤 5: 发送消息后验证输入框恢复初始高度"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1202,7 +1202,7 @@
       "步骤 3: 点击'退出'验证登出成功",
       "步骤 4: 验证跳转到登录页面"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1215,7 +1215,7 @@
       "步骤 5: 填写名字为 1 个字符，验证显示'名称至少 2 个字符'",
       "步骤 6: 填写简介超过 500 字符，验证显示字数超限提示"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1239,7 +1239,7 @@
       "步骤 4: 验证自动跳转到登录页面",
       "步骤 5: 验证登录后跳转回之前的页面"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1250,7 +1250,7 @@
       "步骤 3: 数据加载完成后显示实际内容",
       "步骤 4: 发送聊天消息时验证显示打字指示器"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1261,7 +1261,7 @@
       "步骤 3: 验证'最近对话'区域显示空状态",
       "步骤 4: 搜索无结果时显示'未找到匹配结果'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1294,7 +1294,7 @@
       "步骤 3: 验证显示该用户的公开角色列表",
       "步骤 4: 验证不显示草稿角色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1396,7 +1396,7 @@
       "步骤 5: 点击保存",
       "步骤 6: 退出登录后用新密码登录验证"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1419,7 +1419,7 @@
       "步骤 4: 切换到'最新'，验证按时间排序",
       "步骤 5: 切换到'点赞最多'，验证按点赞数排序"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1455,7 +1455,7 @@
       "步骤 4: 点击'清空记录'验证弹出确认框",
       "步骤 5: 确认后验证消息被清空"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1467,7 +1467,7 @@
       "步骤 4: 验证显示错误 Toast 通知",
       "步骤 5: 验证 Toast 自动消失（约 3 秒）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1478,7 +1478,7 @@
       "步骤 3: 点击取消，验证角色未被删除",
       "步骤 4: 再次点击删除并确认，验证角色被删除"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1514,7 +1514,7 @@
       "步骤 4: 验证所有文件 URL 可正常访问",
       "步骤 5: 验证文件类型和内容正确"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1561,7 +1561,7 @@
       "步骤 4: 验证 LLM API 可用（LLM_API_KEY + LLM_BASE_URL）",
       "步骤 5: 验证 JWT 签名正常（JWT_SECRET）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1573,7 +1573,7 @@
       "步骤 4: 通过前端发送消息，验证 SSE 流式响应正常",
       "步骤 5: 验证跨域（CORS）配置正确"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1643,7 +1643,7 @@
       "步骤 3: 验证 AI 消息：左对齐、浅色背景 #F1F5F9、深色文字、带角色头像",
       "步骤 4: 验证消息间距合适（不拥挤也不过稀）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1655,7 +1655,7 @@
       "步骤 4: hover 时验证阴影加深",
       "步骤 5: 验证过渡动画 200ms smooth"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1678,7 +1678,7 @@
       "步骤 4: 验证边框样式、hover 时填充效果",
       "步骤 5: 验证禁用状态减少透明度且不可点击"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1690,7 +1690,7 @@
       "步骤 4: 验证显示主题色边框 + 外发光效果",
       "步骤 5: 验证 placeholder 文字颜色为灰色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1701,7 +1701,7 @@
       "步骤 3: 验证主题色淡背景 + 主题色文字",
       "步骤 4: 验证标签大小合适、文字居中"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1735,7 +1735,7 @@
       "步骤 3: 验证三个点依次跳动",
       "步骤 4: 验证动画循环播放直到回复开始"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1779,7 +1779,7 @@
       "步骤 3: 验证成功为绿色、错误为红色、警告为黄色、信息为蓝色",
       "步骤 4: 验证约 3 秒后自动滑出消失"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1791,7 +1791,7 @@
       "步骤 4: 验证右侧通知铃铛 + 用户头像",
       "步骤 5: 验证导航栏固定在顶部"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1827,7 +1827,7 @@
       "步骤 4: 验证卡片内容（头像、名字、简介、标签、数据）布局合理",
       "步骤 5: 验证无内容溢出或截断问题"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1839,7 +1839,7 @@
       "步骤 4: 验证名字、关系类型、创建者信息排列清晰",
       "步骤 5: 验证操作按钮区域醒目且不拥挤"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1851,7 +1851,7 @@
       "步骤 4: 验证字段标签和输入框对齐",
       "步骤 5: 验证底部操作按钮（保存草稿/发布）位置合理"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1863,7 +1863,7 @@
       "步骤 4: 验证底部输入区固定，包含输入框+发送+语音+附件按钮",
       "步骤 5: 验证三个区域间距和比例合理"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1898,7 +1898,7 @@
       "步骤 3: 验证每个 Tab 内设置项分组清晰",
       "步骤 4: 验证开关、滑块、选择器等控件样式统一"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1909,7 +1909,7 @@
       "步骤 3: 验证统计数据卡片展示（角色数、对话数、点赞数）",
       "步骤 4: 验证收藏角色区域展示合理"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1933,7 +1933,7 @@
       "步骤 4: 验证有关闭按钮（X 或取消）",
       "步骤 5: 验证点击遮罩层可关闭"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1967,7 +1967,7 @@
       "步骤 3: 验证引导文字清晰（'还没有角色，快去创建一个吧'）",
       "步骤 4: 验证有快捷操作按钮"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1989,7 +1989,7 @@
       "步骤 3: 验证错误提示文字为红色",
       "步骤 4: 验证错误图标显示（如感叹号）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2022,7 +2022,7 @@
       "步骤 3: 执行主要操作（注册、创建角色、聊天等）",
       "步骤 4: 验证 Console 无红色 error 信息"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2033,7 +2033,7 @@
       "步骤 3: 验证按钮提交使用 spinner",
       "步骤 4: 验证样式风格统一"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2056,7 +2056,7 @@
       "步骤 4: 验证语音/图片/附件按钮图标清晰",
       "步骤 5: 验证按钮排列紧凑但不拥挤"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2067,7 +2067,7 @@
       "步骤 3: 触发错误验证红色 #EF4444",
       "步骤 4: 触发信息提示验证蓝色 #3B82F6"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",

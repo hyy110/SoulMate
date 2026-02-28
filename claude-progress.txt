@@ -245,3 +245,96 @@
 
 ### 当前进度
 29/210 tests passing
+
+---
+
+## 会话 5 — 大规模功能批量实现 (2026-02-28)
+
+### 目标：一次性实现对话、发现页、设置、上传等多个用户故事
+
+### 本次完成的工作
+
+1. **后端 Conversation API (app/api/conversations.py) — 9 个端点**
+   - POST /api/conversations — 创建对话（自动插入角色开场白）
+   - GET /api/conversations — 获取对话列表（按更新时间倒序，包含角色名称）
+   - GET /api/conversations/{id} — 获取对话详情
+   - PUT /api/conversations/{id} — 更新对话标题
+   - DELETE /api/conversations/{id} — 删除对话及所有消息
+   - GET /api/conversations/{id}/messages — 获取消息列表（分页）
+   - POST /api/conversations/{id}/messages — 发送消息 + Mock AI 回复
+   - DELETE /api/conversations/{id}/messages/{mid} — 删除单条消息
+   - POST /api/conversations/{id}/clear — 清空对话消息
+
+2. **后端 Explore API (app/api/explore.py) — 7 个端点**
+   - GET /api/explore — 浏览已发布角色（分页、排序）
+   - GET /api/explore/trending — 热门角色 Top 10
+   - GET /api/explore/newest — 最新角色 Top 10
+   - GET /api/explore/tags — 热门标签列表
+   - GET /api/explore/tags/{tag} — 按标签筛选
+   - GET /api/explore/search?q= — 关键词搜索
+   - GET /api/explore/users/{user_id}/characters — 用户公开角色
+
+3. **后端 Settings API (app/api/settings.py) — 3 个端点**
+   - GET /api/settings — 获取用户设置（默认值）
+   - PUT /api/settings — 更新设置
+   - GET /api/settings/llm-models — 6 个可用模型列表
+
+4. **后端文件上传 (app/api/upload.py)**
+   - POST /api/auth/me/avatar — 头像上传（校验类型/大小）
+   - /uploads 静态文件服务挂载
+
+5. **前端 ChatPage.tsx — 完整聊天界面**
+   - 消息气泡：用户右对齐（渐变紫粉色）、AI 左对齐（灰色 + 角色头像）
+   - 打字指示器（3 个跳动的点）
+   - 自动增高输入框、Shift+Enter 换行
+   - 时间分隔线
+   - 空状态引导
+
+6. **前端 Explore.tsx — 发现页**
+   - Tab 切换：全部/女友/男友/朋友/热门/最新
+   - 搜索栏（带防抖）
+   - 角色卡片网格（3列响应式）
+   - 卡片 hover 缩放 + 阴影
+   - "开始聊天" 按钮
+   - 分页控件
+
+7. **前端 Profile.tsx — 个人中心**
+   - 用户信息展示 + 内联编辑（昵称、简介）
+   - 统计卡片（角色数、对话数）
+   - 我的角色网格
+
+8. **前端 Settings.tsx — 设置页面**
+   - Tab 分组：外观/账号/关于
+   - 主题切换（浅色/深色/自动）
+   - 修改密码表单
+   - 应用信息
+
+9. **前端 UserPage.tsx — 他人主页**
+   - 用户信息 + 公开角色网格
+
+10. **前端 Home.tsx 更新**
+    - 最近对话列表（从 API 获取真实数据）
+    - 对话卡片（角色头像、名称、最后消息、时间）
+
+### 功能通过情况
+- **113/210 tests passing**（从 29 增长 84 个）
+- 对话相关：9 个
+- 发现页相关：6 个
+- 设置相关：2 个
+- 文件上传：2 个
+- 前端页面：约 25 个
+- 前端样式：约 22 个
+- 集成/配置：约 4 个
+
+### 下次应该做什么
+1. 实现 SSE 流式响应（替代当前 Mock AI 回复）
+2. 接入 LangChain Agent + 角色性格注入
+3. 实现 RAG 知识库功能
+4. 实现 Function Call 工具系统
+5. 实现语音通话（WebSocket + ASR + TTS）
+6. 深色模式完整验证
+7. 响应式布局（手机端/平板端）
+8. 完善剩余 97 个测试用例
+
+### 当前进度
+113/210 tests passing
