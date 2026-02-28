@@ -149,3 +149,99 @@
 
 ### 当前进度
 15/210 tests passing
+
+---
+
+## 会话 4 — 角色管理全栈实现 (2026-02-28)
+
+### 用户故事：角色 CRUD 管理（全栈）
+
+### 本次完成的工作
+
+1. **后端 Character 模型扩展**
+   - 新增字段：gender, relationship_type, personality, backstory, cover_image_url, status, like_count, chat_count, share_count, tags
+   - 创建 Alembic 迁移 `3ed1373d3eb3_add_character_fields`
+   - 保持与现有数据的向后兼容（server_default 值）
+
+2. **后端 Character API 完整实现 (`app/api/characters.py`)**
+   - POST /api/characters — 创建角色（含 gender/relationship_type/tags 校验）
+   - GET /api/characters — 获取我的角色列表（分页、搜索）
+   - GET /api/characters/:id — 获取角色详情
+   - PUT /api/characters/:id — 更新角色信息（权限校验）
+   - DELETE /api/characters/:id — 删除角色（权限校验）
+   - POST /api/characters/:id/publish — 发布/取消发布切换
+   - POST /api/characters/:id/clone — 克隆角色
+   - GET /api/characters/:id/stats — 获取统计数据
+   - POST /api/characters/:id/like — 点赞
+   - DELETE /api/characters/:id/like — 取消点赞
+   - GET /api/characters/personality-templates — 获取5个性格模板
+
+3. **后端 Character Schemas (`app/schemas/character.py`)**
+   - CharacterCreate, CharacterUpdate, CharacterResponse, CharacterListResponse, PersonalityTemplate
+
+4. **前端 Character API 更新 (`api/characters.ts`)**
+   - 完全重写类型定义匹配新的后端 API 结构
+   - 实现所有 API 调用函数
+
+5. **前端角色创建页面 (`pages/CharacterCreate.tsx`)**
+   - 三段式表单：基本信息 → 性格设定 → 高级设定
+   - 性别和关系类型按钮选择
+   - 标签管理：手动输入 + 建议标签快速添加（最多5个）
+   - 性格模板选择（5个预设模板）
+   - 开场白和系统提示词编辑
+   - 表单校验：名称（2-20字符）、简介（10-500字符）
+   - 错误提示样式（红色边框 + 文字）
+
+6. **前端角色详情页 (`pages/CharacterDetail.tsx`)**
+   - 渐变 header 展示头像、名字、状态标签
+   - 统计卡片：点赞、对话、分享
+   - 操作按钮：点赞、编辑（所有者）、发布、删除
+   - 信息展示：简介、性格、背景故事、标签、开场白
+   - 删除确认模态框（遮罩层 + 确认/取消）
+   - 加载骨架屏
+
+7. **前端角色编辑页 (`pages/CharacterEdit.tsx`)**
+   - 与创建页面相同的表单结构
+   - 预填充已有数据
+   - 保存修改更新 API
+
+8. **前端首页更新 (`pages/Home.tsx`)**
+   - 对接 GET /api/characters 获取真实角色数据
+   - 角色卡片组件：头像、名字、简介、关系类型标签、状态标签
+   - 加载骨架屏（shimmer 效果）
+   - 空状态引导（创建角色图标 + 提示）
+   - 最多展示 6 个角色
+
+### 功能通过情况
+- 29/210 tests passing（新增 14 个）
+- 创建角色 ✓
+- 获取角色列表（分页）✓
+- 获取角色详情 ✓
+- 更新角色 ✓
+- 删除角色 ✓
+- 角色标签管理 ✓
+- 系统提示词设置 ✓
+- 发布角色 ✓
+- 取消发布角色 ✓
+- 克隆角色 ✓
+- 角色统计数据 ✓
+- 性格模板系统 ✓
+- 点赞/取消点赞 ✓
+- API 接口安全（403 权限校验）✓
+
+### 发现并修复的问题
+- Alembic 自动生成的迁移未导入 JSONType，手动添加 import
+- 非 nullable 列需要 server_default 才能适配 SQLite 已有数据
+- 性格模板中的中文引号（""）与 Python 字符串分隔符冲突，改为单引号
+
+### 下次应该做什么
+1. 实现对话功能用户故事（后端消息 API + SSE + 前端聊天页面）
+   - 后端：POST/GET /api/conversations, POST /api/conversations/:id/messages
+   - AI 服务：LangChain Agent + 角色性格注入 + 流式输出
+   - 前端：ChatPage 消息气泡 + 流式渲染 + 输入框
+2. 实现头像上传功能（文件存储服务）
+3. 实现角色开场白功能（创建对话时自动发送）
+4. 实现首页 "最近对话" 板块
+
+### 当前进度
+29/210 tests passing
