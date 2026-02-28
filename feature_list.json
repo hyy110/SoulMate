@@ -130,7 +130,7 @@
       "步骤 4: 验证 creator_id 为当前用户",
       "步骤 5: 验证默认 status 为 draft"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -141,7 +141,7 @@
       "步骤 3: 验证返回 2 个角色和分页信息（total=3, pages=2）",
       "步骤 4: GET /api/characters?page=2&page_size=2，验证返回 1 个角色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -152,7 +152,7 @@
       "步骤 3: 验证返回所有字段（name, gender, personality, backstory, tags, voice_id 等）",
       "步骤 4: 访问不存在的 id，验证返回 404"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -163,7 +163,7 @@
       "步骤 3: 验证返回 200 和更新后的数据",
       "步骤 4: 验证其他用户无法修改该角色（返回 403）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -175,7 +175,7 @@
       "步骤 4: GET /api/characters/:id 验证返回 404",
       "步骤 5: 验证关联的对话也被清理"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -197,7 +197,7 @@
       "步骤 3: 更新角色设置 6 个标签，验证返回错误",
       "步骤 4: 更新为 5 个标签，验证成功"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -208,7 +208,7 @@
       "步骤 3: 修改 system_prompt，验证更新成功",
       "步骤 4: 验证 system_prompt 在对话时被正确注入（通过对话测试）"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -230,7 +230,7 @@
       "步骤 3: 验证角色 status 变为 published",
       "步骤 4: 验证该角色出现在 GET /api/explore 的结果中"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -241,7 +241,7 @@
       "步骤 3: 验证角色 status 变回 draft",
       "步骤 4: 验证该角色不再出现在发现页"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -254,7 +254,7 @@
       "步骤 5: 验证新角色的 creator_id 为用户 B",
       "步骤 6: 验证新角色默认为 draft 状态"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -265,7 +265,7 @@
       "步骤 3: GET /api/characters/:id/stats",
       "步骤 4: 验证统计数据正确"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -275,7 +275,7 @@
       "步骤 2: 验证返回模板列表（温柔体贴型、活泼开朗型、高冷傲娇型等）",
       "步骤 3: 每个模板包含 name、description、personality_text、sample_dialogues"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -342,7 +342,7 @@
       "步骤 5: DELETE /api/characters/:id/like 取消点赞",
       "步骤 6: 验证 like_count 减少 1"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1489,7 +1489,7 @@
       "步骤 3: 用户 B 尝试 DELETE /api/characters/:id（A 的角色），验证返回 403",
       "步骤 4: 用户 B 尝试获取 A 的私有对话，验证返回 403"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
