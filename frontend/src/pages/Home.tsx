@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { getCharacters, type Character } from '../api/characters';
+import { getConversations, type Conversation } from '../api/conversations';
+import { formatRelativeTime } from '../utils';
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
   girlfriend: '女友',
@@ -17,7 +19,7 @@ function CharacterCard({ character }: { character: Character }) {
       className="card group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg"
     >
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold text-white">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-2xl font-bold text-white">
           {character.avatar_url ? (
             <img src={character.avatar_url} alt={character.name} className="h-full w-full rounded-full object-cover" />
           ) : (
@@ -48,16 +50,68 @@ function CharacterCard({ character }: { character: Character }) {
   );
 }
 
+function ConversationCard({ conversation }: { conversation: Conversation }) {
+  return (
+    <Link
+      to={`/chat/${conversation.id}`}
+      className="card group cursor-pointer transition-all hover:scale-[1.01] hover:shadow-md"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-lg font-bold text-white">
+          {conversation.character_name.charAt(0)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between">
+            <h3 className="truncate text-sm font-semibold group-hover:text-primary-600 dark:group-hover:text-primary-400">
+              {conversation.character_name}
+            </h3>
+            <span className="flex-shrink-0 text-xs text-text-light-secondary dark:text-text-dark-secondary">
+              {formatRelativeTime(conversation.updated_at)}
+            </span>
+          </div>
+          <p className="mt-0.5 line-clamp-1 text-sm text-text-light-secondary dark:text-text-dark-secondary">
+            {conversation.title || '暂无消息'}
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ConversationSkeleton() {
+  return (
+    <div className="card">
+      <div className="flex items-center gap-3">
+        <div className="h-12 w-12 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="h-3 w-14 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+          </div>
+          <div className="h-3 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const { user } = useAuthStore();
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoadingChars, setIsLoadingChars] = useState(true);
+  const [isLoadingConvs, setIsLoadingConvs] = useState(true);
 
   useEffect(() => {
     getCharacters(1, 6)
       .then((res) => setCharacters(res.items))
       .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsLoadingChars(false));
+
+    getConversations()
+      .then((convs) => setConversations(convs.slice(0, 5)))
+      .catch(() => {})
+      .finally(() => setIsLoadingConvs(false));
   }, []);
 
   return (
@@ -105,6 +159,41 @@ export default function Home() {
         </Link>
       </section>
 
+      {/* Recent Conversations */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">最近对话</h2>
+          {conversations.length > 0 && (
+            <Link
+              to="/explore"
+              className="text-sm font-medium text-primary-600 hover:text-primary-500"
+            >
+              发现更多角色 →
+            </Link>
+          )}
+        </div>
+
+        {isLoadingConvs ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <ConversationSkeleton key={i} />
+            ))}
+          </div>
+        ) : conversations.length > 0 ? (
+          <div className="space-y-3">
+            {conversations.map((conv) => (
+              <ConversationCard key={conv.id} conversation={conv} />
+            ))}
+          </div>
+        ) : (
+          <div className="card text-center">
+            <p className="py-8 text-text-light-secondary dark:text-text-dark-secondary">
+              还没有对话记录，创建角色后即可开始聊天
+            </p>
+          </div>
+        )}
+      </section>
+
       {/* My Characters */}
       <section>
         <div className="mb-4 flex items-center justify-between">
@@ -117,7 +206,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {isLoading ? (
+        {isLoadingChars ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {[1, 2].map((i) => (
               <div key={i} className="card">
@@ -153,16 +242,6 @@ export default function Home() {
             </div>
           </div>
         )}
-      </section>
-
-      {/* Recent Conversations Placeholder */}
-      <section>
-        <h2 className="mb-4 text-xl font-semibold">最近对话</h2>
-        <div className="card text-center">
-          <p className="py-8 text-text-light-secondary dark:text-text-dark-secondary">
-            还没有对话记录，创建角色后即可开始聊天
-          </p>
-        </div>
       </section>
     </div>
   );
