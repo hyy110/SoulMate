@@ -1,8 +1,64 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { getCharacters, type Character } from '../api/characters';
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  girlfriend: '女友',
+  boyfriend: '男友',
+  friend: '朋友',
+  custom: '自定义',
+};
+
+function CharacterCard({ character }: { character: Character }) {
+  return (
+    <Link
+      to={`/character/${character.id}`}
+      className="card group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg"
+    >
+      <div className="flex items-center gap-4">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold text-white">
+          {character.avatar_url ? (
+            <img src={character.avatar_url} alt={character.name} className="h-full w-full rounded-full object-cover" />
+          ) : (
+            character.name.charAt(0)
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold">{character.name}</h3>
+          <p className="mt-0.5 line-clamp-1 text-sm text-text-light-secondary dark:text-text-dark-secondary">
+            {character.description || '暂无简介'}
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+              {RELATIONSHIP_LABELS[character.relationship_type] || character.relationship_type}
+            </span>
+            <span className={`rounded-full px-2 py-0.5 text-xs ${
+              character.status === 'published'
+                ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'
+            }`}>
+              {character.status === 'published' ? '已发布' : '草稿'}
+            </span>
+          </div>
+        </div>
+        <div className="text-text-light-secondary dark:text-text-dark-secondary">→</div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
   const { user } = useAuthStore();
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getCharacters(1, 6)
+      .then((res) => setCharacters(res.items))
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -49,7 +105,7 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* My Characters Placeholder */}
+      {/* My Characters */}
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">我的角色</h2>
@@ -60,15 +116,43 @@ export default function Home() {
             创建新角色 →
           </Link>
         </div>
-        <div className="card text-center">
-          <p className="py-8 text-text-light-secondary dark:text-text-dark-secondary">
-            还没有创建角色，
-            <Link to="/character/create" className="font-medium text-primary-600 hover:text-primary-500">
-              立即创建
-            </Link>
-            你的第一个 AI 伙伴吧！
-          </p>
-        </div>
+
+        {isLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[1, 2].map((i) => (
+              <div key={i} className="card">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-3 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : characters.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {characters.map((char) => (
+              <CharacterCard key={char.id} character={char} />
+            ))}
+          </div>
+        ) : (
+          <div className="card text-center">
+            <div className="py-8">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-3xl dark:bg-primary-900/30">
+                ✨
+              </div>
+              <p className="text-text-light-secondary dark:text-text-dark-secondary">
+                还没有创建角色，
+                <Link to="/character/create" className="font-medium text-primary-600 hover:text-primary-500">
+                  立即创建
+                </Link>
+                你的第一个 AI 伙伴吧！
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Recent Conversations Placeholder */}
