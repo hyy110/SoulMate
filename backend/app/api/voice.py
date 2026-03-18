@@ -164,7 +164,7 @@ async def create_voice(
     if reference_audio and reference_audio.filename:
         suffix = Path(reference_audio.filename).suffix.lower()
         if suffix not in ALLOWED_AUDIO_EXTENSIONS:
-            raise HTTPException(status_code=400, detail="仅支持 mp3/wav/m4a 音频文件")
+            raise HTTPException(status_code=400, detail=f"不支持的音频格式 {suffix}，仅支持 mp3/wav/m4a/webm/ogg")
 
         content = await reference_audio.read()
         if len(content) > MAX_AUDIO_SIZE_BYTES:
