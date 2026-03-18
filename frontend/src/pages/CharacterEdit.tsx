@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getCharacter, updateCharacter, getPersonalityTemplates, type PersonalityTemplate, type CharacterUpdateRequest } from '../api/characters';
+import { getVoices, previewVoice, type VoiceProfile } from '../api/voice';
 import { showSuccess, showError } from '../components/UI/Toast';
 
 const GENDERS = [
@@ -27,6 +28,11 @@ export default function CharacterEdit() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [templates, setTemplates] = useState<PersonalityTemplate[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<VoiceProfile[]>([]);
+  const [selectedVoiceId, setSelectedVoiceId] = useState('');
+  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
   const [name, setName] = useState('');
   const [gender, setGender] = useState('female');
@@ -42,8 +48,8 @@ export default function CharacterEdit() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([getCharacter(id), getPersonalityTemplates()])
-      .then(([char, tmpls]) => {
+    Promise.all([getCharacter(id), getPersonalityTemplates(), getVoices()])
+      .then(([char, tmpls, voiceData]) => {
         setName(char.name);
         setGender(char.gender);
         setRelationshipType(char.relationship_type);
@@ -53,13 +59,23 @@ export default function CharacterEdit() {
         setGreetingMessage(char.greeting_message || '');
         setSystemPrompt(char.system_prompt || '');
         setTags(char.tags || []);
+        setSelectedVoiceId(char.voice_profile_id || '');
         setTemplates(tmpls);
+        setAvailableVoices(voiceData.filter((voice) => !voice.is_preset));
       })
       .catch(() => {
         showError('加载角色信息失败');
         navigate('/');
       })
       .finally(() => setIsLoading(false));
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
   }, [id, navigate]);
 
   const validate = (): boolean => {
@@ -85,6 +101,44 @@ export default function CharacterEdit() {
     setTags(tags.filter((t) => t !== tag));
   };
 
+  const stopVoicePreview = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    setPreviewingVoiceId(null);
+  };
+
+  const handlePreviewVoice = async () => {
+    if (!selectedVoiceId) {
+      showError('请先选择一个自定义音色');
+      return;
+    }
+
+    setPreviewingVoiceId(selectedVoiceId);
+    try {
+      stopVoicePreview();
+      const blob = await previewVoice({
+        voice_id: selectedVoiceId,
+        text: greetingMessage.trim() || '你好，很高兴认识你。',
+      });
+      const objectUrl = URL.createObjectURL(blob);
+      objectUrlRef.current = objectUrl;
+      const audio = new Audio(objectUrl);
+      audioRef.current = audio;
+      audio.onended = () => stopVoicePreview();
+      await audio.play();
+      setPreviewingVoiceId(selectedVoiceId);
+    } catch {
+      showError('试听失败，请稍后重试');
+      stopVoicePreview();
+    }
+  };
+
   const handleSubmit = async () => {
     if (!id || !validate()) return;
 
@@ -100,6 +154,7 @@ export default function CharacterEdit() {
         greeting_message: greetingMessage.trim() || undefined,
         system_prompt: systemPrompt.trim() || undefined,
         tags: tags.length > 0 ? tags : undefined,
+        voice_profile_id: selectedVoiceId || undefined,
       };
 
       await updateCharacter(id, data);
@@ -299,6 +354,44 @@ export default function CharacterEdit() {
         <div>
           <label className="mb-1 block text-sm font-medium">系统提示词</label>
           <textarea className="input-field min-h-[120px] resize-none font-mono text-sm" placeholder="高级用户可直接编辑系统提示词" value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} rows={5} />
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-medium">绑定音色（可选）</label>
+            <Link to="/profile/voices" className="text-xs font-medium text-primary-600 hover:text-primary-500">
+              管理音色
+            </Link>
+          </div>
+
+          {availableVoices.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border-light px-3 py-2 text-sm text-text-light-secondary dark:border-border-dark dark:text-text-dark-secondary">
+              你还没有自定义音色，请先在音色管理页创建后再绑定。
+            </p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <select
+                className="input-field"
+                value={selectedVoiceId}
+                onChange={(e) => setSelectedVoiceId(e.target.value)}
+              >
+                <option value="">不绑定音色</option>
+                {availableVoices.map((voice) => (
+                  <option key={voice.id} value={voice.id}>
+                    {voice.name} ({voice.language.toUpperCase()}) [{voice.status}]
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handlePreviewVoice}
+                disabled={!selectedVoiceId}
+                className="btn-secondary"
+              >
+                {previewingVoiceId === selectedVoiceId && selectedVoiceId ? '试听中...' : '试听'}
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

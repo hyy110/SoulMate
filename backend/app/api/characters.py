@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.character import Character, Favorite
 from app.models.user import User
+from app.models.voice_profile import VoiceProfile
 from app.schemas.character import (
     CharacterCreate,
     CharacterListResponse,
@@ -102,6 +103,29 @@ PERSONALITY_TEMPLATES = [
 ]
 
 
+def _resolve_voice_profile_id(
+    voice_profile_id: str | None,
+    current_user: User,
+    db: Session,
+) -> uuid.UUID | None:
+    if not voice_profile_id:
+        return None
+
+    try:
+        voice_uuid = uuid.UUID(voice_profile_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="voice_profile_id 格式无效")
+
+    voice_profile = (
+        db.query(VoiceProfile)
+        .filter(VoiceProfile.id == voice_uuid, VoiceProfile.creator_id == current_user.id)
+        .first()
+    )
+    if not voice_profile:
+        raise HTTPException(status_code=400, detail="音色不存在或无权使用")
+    return voice_uuid
+
+
 @router.get("/personality-templates", response_model=list[PersonalityTemplate])
 def get_personality_templates():
     return PERSONALITY_TEMPLATES
@@ -141,8 +165,9 @@ def create_character(
         creator_id=current_user.id,
         status="draft",
     )
-    if body.voice_profile_id:
-        character.voice_profile_id = uuid.UUID(body.voice_profile_id)
+    resolved_voice_profile_id = _resolve_voice_profile_id(body.voice_profile_id, current_user, db)
+    if resolved_voice_profile_id:
+        character.voice_profile_id = resolved_voice_profile_id
 
     db.add(character)
     db.commit()
@@ -231,11 +256,16 @@ def update_character(
         if update_data["relationship_type"] not in valid_types:
             raise HTTPException(status_code=400, detail=f"关系类型必须是 {valid_types} 之一")
 
+    if "voice_profile_id" in update_data:
+        character.voice_profile_id = _resolve_voice_profile_id(
+            update_data["voice_profile_id"],
+            current_user,
+            db,
+        )
+        update_data.pop("voice_profile_id")
+
     for key, value in update_data.items():
-        if key == "voice_profile_id" and value:
-            setattr(character, key, uuid.UUID(value))
-        else:
-            setattr(character, key, value)
+        setattr(character, key, value)
 
     db.commit()
     db.refresh(character)

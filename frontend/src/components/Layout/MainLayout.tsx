@@ -13,6 +13,7 @@ const sidebarLinks = [
   { to: '/explore', label: '发现角色' },
   { to: '/character/create', label: '创建角色' },
   { to: '/profile', label: '个人中心' },
+  { to: '/profile/voices', label: '音色管理' },
   { to: '/settings', label: '设置' },
 ];
 

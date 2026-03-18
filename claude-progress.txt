@@ -338,3 +338,73 @@
 
 ### 当前进度
 113/210 tests passing
+
+---
+
+## 会话 6 — 音色管理与训练状态全栈打通 (2026-03-18)
+
+### 用户故事：音色管理基础闭环（后端 API + 前端页面 + 角色绑定入口）
+
+### 本次完成的工作
+
+1. **后端 Voice API 完整实现 (`app/api/voice.py`)**
+   - 新增并启用 `/api/voices` 路由（已注册到 `main.py`）
+   - GET `/api/voices`：返回预设音色 + 用户自定义音色
+   - GET `/api/voices/presets`：返回预设音色列表
+   - POST `/api/voices`：上传参考音频创建音色（零样本/训练模式）
+   - POST `/api/voices/:id/train`：启动训练任务（202）
+   - GET `/api/voices/:id/train/status`：返回并推进训练状态/进度/预计剩余时间
+   - POST `/api/voices/preview`：返回可播放的 WAV 试听流
+   - DELETE `/api/voices/:id`：删除自定义音色（并解除角色绑定），禁止删除预设音色
+
+2. **后端模型与迁移**
+   - `VoiceProfile` 新增字段：`voice_type`、`status`、`training_progress`、`estimated_time`
+   - 新增 Alembic 迁移：`0f4d3ab8be11_add_voice_training_fields.py`
+   - 执行 `alembic upgrade head`，数据库结构已升级
+
+3. **后端角色绑定校验增强 (`app/api/characters.py`)**
+   - 创建/更新角色时，`voice_profile_id` 现在会做格式校验与归属校验
+   - 非法 ID 或越权音色会返回 400，避免原有潜在 500
+
+4. **前端音色 API 重构 (`frontend/src/api/voice.ts`)**
+   - 对齐后端 `/api/voices` 协议：列表、创建、训练状态、删除、试听
+   - 保留旧语音通话 API wrapper，避免影响既有语音模块引用
+
+5. **前端新增音色管理页面 (`frontend/src/pages/VoiceProfiles.tsx`)**
+   - 新路由：`/profile/voices`
+   - 展示预设音色与我的音色
+   - 支持创建音色（名称/语言/复刻方式/上传音频）
+   - 训练中音色自动轮询进度并显示进度条和预计剩余时间
+   - 支持试听（音频播放）与删除
+
+6. **前端入口与角色页联动**
+   - `router.tsx` 新增 `/profile/voices` 路由
+   - `MainLayout` 侧边栏新增“音色管理”入口
+   - `Profile.tsx` 新增“前往音色管理”卡片
+   - `CharacterCreate.tsx` / `CharacterEdit.tsx` 新增“绑定音色”选择与试听入口，并提交 `voice_profile_id`
+
+### 功能通过情况
+- **115/210 tests passing**（新增 2 个）
+- Feature #56: 音色训练进度查询（GET /api/voices/:id/train/status）✓
+- Feature #57: 删除自定义音色（DELETE /api/voices/:id，且预设不可删）✓
+
+### 验证与回归
+- 回归验证通过：
+  - `GET /api/health`
+  - `POST /api/auth/register` + `POST /api/auth/login`
+- 新增链路验证通过（TestClient + 实际 uvicorn 启动后 httpx）：
+  - 音色创建 -> 启动训练 -> 轮询训练状态 -> 试听
+  - 删除自定义音色 + 预设音色删除保护
+  - 角色创建绑定音色 + 删除音色后自动解绑
+
+### 发现并处理的问题
+- 发现 `voice` 模块此前仅占位，已替换为可运行实现
+- 发现前端 `npm run build` 被历史 TypeScript 配置问题阻塞（`vite.config.ts` 的 Node 类型与 `tsconfig.node.json` 配置），本次未改动该历史问题
+
+### 下次应该做什么
+1. 完成 `角色绑定音色` 的剩余验证（语音通话真实使用绑定音色）
+2. 补齐音色管理 UI 相关未通过项（完整创建流程、训练进度视觉规范）
+3. 推进知识库/RAG 或 Function Call 的下一组未通过用户故事
+
+### 当前进度
+115/210 tests passing

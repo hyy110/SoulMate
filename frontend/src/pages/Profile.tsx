@@ -161,6 +161,18 @@ export default function Profile() {
         <StatCard label="对话数" value={conversationCount} icon="💬" />
       </div>
 
+      <div className="card flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold">音色设置</h2>
+          <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">
+            管理预设和自定义音色，支持训练进度查看与试听。
+          </p>
+        </div>
+        <Link to="/profile/voices" className="btn-primary">
+          前往音色管理
+        </Link>
+      </div>
+
       {/* My Characters */}
       <section>
         <div className="mb-4 flex items-center justify-between">
