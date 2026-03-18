@@ -19,7 +19,7 @@ from app.security import get_current_user
 
 router = APIRouter(prefix="/api/voices", tags=["voices"])
 
-ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a"}
+ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".webm", ".ogg"}
 MAX_AUDIO_SIZE_BYTES = 20 * 1024 * 1024
 
 PRESET_VOICES: list[dict] = [

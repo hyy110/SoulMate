@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import clsx from 'clsx';
 import {
   createVoiceProfile,
   deleteVoiceProfile,
@@ -41,6 +42,204 @@ function statusBadgeClass(status: string): string {
   }
 }
 
+const MAX_RECORD_SECONDS = 60;
+const MIN_RECORD_SECONDS = 3;
+
+function MicRecorder({ onRecorded }: { onRecorded: (file: File) => void }) {
+  const [state, setState] = useState<'idle' | 'recording' | 'done'>('idle');
+  const [seconds, setSeconds] = useState(0);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null);
+  const playbackRef = useRef<HTMLAudioElement | null>(null);
+
+  const cleanup = useCallback(() => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    mediaRecorderRef.current = null;
+  }, []);
+
+  useEffect(() => () => {
+    cleanup();
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+  }, [cleanup, recordedUrl]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const ext = mimeType.includes('webm') ? 'webm' : 'ogg';
+        const file = new File([blob], `recording.${ext}`, { type: blob.type });
+
+        if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(url);
+        onRecorded(file);
+        setState('done');
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+      };
+
+      recorder.start(250);
+      setSeconds(0);
+      setState('recording');
+
+      timerRef.current = window.setInterval(() => {
+        setSeconds((prev) => {
+          const next = prev + 1;
+          if (next >= MAX_RECORD_SECONDS) {
+            mediaRecorderRef.current?.stop();
+            window.clearInterval(timerRef.current);
+          }
+          return next;
+        });
+      }, 1000);
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        showError('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风');
+      } else {
+        showError('无法访问麦克风，请检查设备连接');
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (seconds < MIN_RECORD_SECONDS) {
+      showError(`录音至少需要 ${MIN_RECORD_SECONDS} 秒`);
+      cleanup();
+      setState('idle');
+      setSeconds(0);
+      return;
+    }
+    mediaRecorderRef.current?.stop();
+  };
+
+  const resetRecording = () => {
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    setRecordedUrl(null);
+    setState('idle');
+    setSeconds(0);
+  };
+
+  const togglePlayback = () => {
+    if (!recordedUrl) return;
+    if (playbackRef.current && !playbackRef.current.paused) {
+      playbackRef.current.pause();
+      playbackRef.current.currentTime = 0;
+      playbackRef.current = null;
+      return;
+    }
+    const audio = new Audio(recordedUrl);
+    playbackRef.current = audio;
+    audio.onended = () => { playbackRef.current = null; };
+    audio.play();
+  };
+
+  const formatTime = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  if (state === 'idle') {
+    return (
+      <button
+        type="button"
+        onClick={startRecording}
+        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border-light py-8 transition-colors hover:border-primary-400 hover:bg-primary-50/50 dark:border-border-dark dark:hover:border-primary-600 dark:hover:bg-primary-900/10"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <svg className="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+          </svg>
+        </div>
+        <div className="text-left">
+          <p className="text-sm font-medium">点击开始录音</p>
+          <p className="text-xs text-text-light-secondary dark:text-text-dark-secondary">
+            对着麦克风说 {MIN_RECORD_SECONDS}-{MAX_RECORD_SECONDS} 秒的话
+          </p>
+        </div>
+      </button>
+    );
+  }
+
+  if (state === 'recording') {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-red-300 bg-red-50/50 py-6 dark:border-red-800 dark:bg-red-900/10">
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <div className="absolute inset-0 animate-ping rounded-full bg-red-400/30" />
+          <div className="absolute inset-2 animate-pulse rounded-full bg-red-400/20" />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
+            <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+            </svg>
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-mono font-bold text-red-600 dark:text-red-400">
+            {formatTime(seconds)}
+          </p>
+          <p className="mt-1 text-xs text-text-light-secondary dark:text-text-dark-secondary">
+            录音中... {seconds < MIN_RECORD_SECONDS
+              ? `至少还需 ${MIN_RECORD_SECONDS - seconds} 秒`
+              : '点击停止完成录音'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={stopRecording}
+          className="rounded-xl bg-red-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600"
+        >
+          停止录音
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-border-light bg-gray-50 px-4 py-3 dark:border-border-dark dark:bg-gray-800/50">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <svg className="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-medium">录音完成</p>
+          <p className="text-xs text-text-light-secondary dark:text-text-dark-secondary">
+            时长 {formatTime(seconds)}
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={togglePlayback} className="btn-secondary px-3 py-1.5 text-xs">
+          试听
+        </button>
+        <button type="button" onClick={resetRecording} className="btn-secondary px-3 py-1.5 text-xs">
+          重录
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function VoiceProfiles() {
   const [voices, setVoices] = useState<VoiceProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +251,7 @@ export default function VoiceProfiles() {
   const [language, setLanguage] = useState('zh');
   const [cloneMode, setCloneMode] = useState<'zeroshot' | 'training'>('zeroshot');
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioSource, setAudioSource] = useState<'upload' | 'record'>('upload');
   const [previewText, setPreviewText] = useState('你好，很高兴认识你。');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -302,17 +502,50 @@ export default function VoiceProfiles() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium">参考音频（mp3/wav/m4a）</label>
-          <input
-            type="file"
-            accept=".mp3,.wav,.m4a,audio/*"
-            onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-text-light-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 dark:text-text-dark-secondary dark:file:bg-primary-900/30 dark:file:text-primary-300"
-          />
-          {audioFile && (
-            <p className="mt-1 text-xs text-text-light-secondary dark:text-text-dark-secondary">
-              已选择：{audioFile.name}
-            </p>
+          <label className="mb-2 block text-sm font-medium">参考音频</label>
+          <div className="mb-3 flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => { setAudioSource('upload'); setAudioFile(null); }}
+              className={clsx(
+                'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+                audioSource === 'upload'
+                  ? 'bg-white text-text-light shadow-sm dark:bg-gray-700 dark:text-text-dark'
+                  : 'text-text-light-secondary hover:text-text-light dark:text-text-dark-secondary dark:hover:text-text-dark',
+              )}
+            >
+              上传文件
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAudioSource('record'); setAudioFile(null); }}
+              className={clsx(
+                'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+                audioSource === 'record'
+                  ? 'bg-white text-text-light shadow-sm dark:bg-gray-700 dark:text-text-dark'
+                  : 'text-text-light-secondary hover:text-text-light dark:text-text-dark-secondary dark:hover:text-text-dark',
+              )}
+            >
+              麦克风录音
+            </button>
+          </div>
+
+          {audioSource === 'upload' ? (
+            <div>
+              <input
+                type="file"
+                accept=".mp3,.wav,.m4a,audio/*"
+                onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-text-light-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 dark:text-text-dark-secondary dark:file:bg-primary-900/30 dark:file:text-primary-300"
+              />
+              {audioFile && (
+                <p className="mt-1 text-xs text-text-light-secondary dark:text-text-dark-secondary">
+                  已选择：{audioFile.name}
+                </p>
+              )}
+            </div>
+          ) : (
+            <MicRecorder onRecorded={(file) => setAudioFile(file)} />
           )}
         </div>
 
