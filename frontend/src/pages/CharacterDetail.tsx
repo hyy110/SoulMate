@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getCharacter, deleteCharacter, publishCharacter, likeCharacter, unlikeCharacter, type Character } from '../api/characters';
+import { getCharacter, deleteCharacter, publishCharacter, likeCharacter, unlikeCharacter, cloneCharacter, type Character } from '../api/characters';
+import { createConversation } from '../api/conversations';
 import { useAuthStore } from '../stores/authStore';
 import { showSuccess, showError } from '../components/UI/Toast';
 
@@ -21,6 +22,8 @@ export default function CharacterDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCloneConfirm, setShowCloneConfirm] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -78,6 +81,31 @@ export default function CharacterDetail() {
       }
     } catch {
       showError('操作失败');
+    }
+  };
+
+  const handleClone = async () => {
+    if (!character) return;
+    try {
+      const cloned = await cloneCharacter(character.id);
+      showSuccess('角色克隆成功！');
+      setShowCloneConfirm(false);
+      navigate(`/character/${cloned.id}`);
+    } catch {
+      showError('克隆失败');
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!character) return;
+    setChatLoading(true);
+    try {
+      const conv = await createConversation({ character_id: character.id });
+      navigate(`/chat/${conv.id}`);
+    } catch {
+      showError('创建对话失败');
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -143,22 +171,65 @@ export default function CharacterDetail() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
-        <button onClick={handleLike} className={`btn-secondary flex items-center gap-2 ${isLiked ? 'text-red-500 border-red-300' : ''}`}>
-          {isLiked ? '❤️' : '🤍'} {isLiked ? '已点赞' : '点赞'}
+        <button
+          onClick={handleStartChat}
+          disabled={chatLoading}
+          className="btn-primary flex items-center gap-2"
+        >
+          {chatLoading ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          ) : (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          )}
+          开始聊天
         </button>
+        <button
+          onClick={handleLike}
+          className={`btn-secondary flex items-center gap-2 transition-colors ${
+            isLiked
+              ? 'border-red-300 text-red-500 dark:border-red-700'
+              : ''
+          }`}
+        >
+          <svg
+            className={`h-5 w-5 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'fill-none text-current'}`}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          {isLiked ? '已点赞' : '点赞'} {character.like_count > 0 && `(${character.like_count})`}
+        </button>
+        {!isOwner && (
+          <button
+            onClick={() => setShowCloneConfirm(true)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            克隆
+          </button>
+        )}
         {isOwner && (
           <>
-            <Link to={`/character/${character.id}/edit`} className="btn-secondary">
-              ✏️ 编辑
+            <Link to={`/character/${character.id}/edit`} className="btn-secondary flex items-center gap-2">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              编辑
             </Link>
             <button onClick={handlePublish} className="btn-secondary">
-              {character.status === 'published' ? '📤 取消发布' : '📢 发布'}
+              {character.status === 'published' ? '取消发布' : '发布'}
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="btn-secondary text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
-              🗑️ 删除
+              删除
             </button>
           </>
         )}
@@ -242,6 +313,26 @@ export default function CharacterDetail() {
                 onClick={() => setShowDeleteConfirm(false)}
                 className="btn-secondary flex-1"
               >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clone Confirmation Modal */}
+      {showCloneConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCloneConfirm(false)}>
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface-light p-6 shadow-xl dark:bg-surface-dark" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold">克隆角色</h3>
+            <p className="mt-2 text-sm text-text-light-secondary dark:text-text-dark-secondary">
+              将创建 "{character.name}" 的副本到你的角色列表。
+            </p>
+            <div className="mt-4 flex gap-3">
+              <button onClick={handleClone} className="btn-primary flex-1">
+                确认克隆
+              </button>
+              <button onClick={() => setShowCloneConfirm(false)} className="btn-secondary flex-1">
                 取消
               </button>
             </div>

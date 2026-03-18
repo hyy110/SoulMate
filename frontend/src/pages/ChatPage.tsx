@@ -62,7 +62,12 @@ function ChatBubble({ message, characterName }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={clsx('flex items-end gap-2.5', isUser ? 'flex-row-reverse' : 'flex-row')}>
+    <div
+      className={clsx(
+        'flex items-end gap-2.5 animate-fade-in',
+        isUser ? 'flex-row-reverse' : 'flex-row',
+      )}
+    >
       {!isUser && (
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-xs font-bold text-white">
           {characterName.charAt(0)}
@@ -70,7 +75,7 @@ function ChatBubble({ message, characterName }: MessageBubbleProps) {
       )}
       <div
         className={clsx(
-          'max-w-[70%] px-4 py-2.5 text-[15px] leading-relaxed',
+          'max-w-[70%] px-4 py-2.5 text-[15px] leading-relaxed animate-slide-up',
           isUser
             ? 'rounded-[18px] rounded-br-[4px] bg-gradient-to-r from-primary-600 to-pink-500 text-white'
             : 'rounded-[18px] rounded-bl-[4px] bg-gray-100 text-text-light dark:bg-gray-800 dark:text-text-dark',
@@ -127,8 +132,17 @@ export default function ChatPage() {
 
         const char = await getCharacter(conv.character_id);
         if (!cancelled) setCharacter(char);
-      } catch {
-        if (!cancelled) showError('加载对话失败');
+      } catch (err: any) {
+        if (!cancelled) {
+          if (err?.code === 'ERR_NETWORK' || !navigator.onLine) {
+            showError('网络连接失败，请检查网络');
+          } else if (err?.response?.status === 404) {
+            showError('对话不存在');
+            navigate('/');
+          } else {
+            showError('加载对话失败');
+          }
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -185,9 +199,17 @@ export default function ChatPage() {
         };
         return [...withoutTemp, realUserMsg, aiMessage];
       });
-    } catch {
+    } catch (err: any) {
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
-      showError('发送失败，请重试');
+      if (err?.code === 'ERR_NETWORK' || !navigator.onLine) {
+        showError('网络连接失败，请检查网络后重试');
+      } else if (err?.response?.status === 401) {
+        showError('登录已过期，请重新登录');
+      } else if (err?.response?.status === 429) {
+        showError('请求过于频繁，请稍后再试');
+      } else {
+        showError('发送失败，请重试');
+      }
     } finally {
       setIsSending(false);
     }

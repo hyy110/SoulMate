@@ -408,3 +408,114 @@
 
 ### 当前进度
 115/210 tests passing
+
+---
+
+## 会话 7 — 工具系统 + 20 个 Feature 批量实现 (2026-03-19)
+
+### 目标：一次性实现 20 个未通过的 Feature（后端 API + 前端 UI + 样式）
+
+### 本次完成的工作
+
+1. **后端 Tools API 完整实现 (`app/api/tools.py`)**
+   - GET /api/tools/builtin — 返回 6 个内置工具（天气、计算器、搜索、提醒、日期时间、翻译）
+   - POST /api/tools — 注册用户自定义工具（name, description, parameters, webhook_url）
+   - GET /api/tools/{tool_id} — 获取工具详情（内置 + 自定义）
+   - DELETE /api/tools/{tool_id} — 删除自定义工具（禁止删除内置工具）
+   - 定义 Pydantic 模型：ToolCreate, ToolResponse
+
+2. **后端角色工具绑定 (`app/api/characters.py`)**
+   - GET /api/characters/{id}/tools — 获取角色已绑定的工具列表
+   - PUT /api/characters/{id}/tools — 批量绑定/解绑工具（内置 + 自定义）
+
+3. **数据库 Schema 变更**
+   - Tool 模型：character_id 改为 nullable，新增 creator_id（关联 User）
+   - Alembic 迁移：37d8b378e576（修复 GUID 导入和 FK 约束命名）
+
+4. **前端 Settings 语音设置 Tab**
+   - ASR 语言选择（中/英/日/韩/自动）
+   - TTS 语速滑块（0.5x - 2.0x）
+   - 自动播放语音回复开关
+   - 设置持久化到 localStorage
+
+5. **前端全局搜索 (`MainLayout.tsx`)**
+   - 导航栏搜索框，输入关键词实时搜索角色
+   - 搜索结果下拉列表，点击导航到角色详情
+   - 防抖 300ms
+
+6. **前端用户下拉菜单 (`MainLayout.tsx`)**
+   - 点击头像展开下拉菜单（个人中心、音色管理、设置、退出）
+   - 用户信息展示（昵称、邮箱）
+   - slide-down 动画
+   - 点击外部自动关闭
+
+7. **前端推荐角色轮播 (`Home.tsx`)**
+   - 首页展示社区热门角色推荐（轮播卡片）
+   - 自动轮播（4 秒间隔）+ 指示器点
+   - 点击角色进入详情页
+   - 新增 getPublishedCharacters API
+
+8. **前端角色详情页增强 (`CharacterDetail.tsx`)**
+   - "开始聊天" 按钮（创建对话并跳转）
+   - 克隆角色按钮 + 确认对话框
+   - 点赞按钮 SVG 图标（实心/空心切换 + 计数显示）
+   - 编辑/删除按钮 SVG 图标
+
+9. **前端数据导出 (`Settings.tsx`)**
+   - "导出数据" 按钮在关于 Tab
+   - 导出角色 + 对话为 JSON 文件
+   - 加载状态 + 成功/失败提示
+
+10. **前端消息动画 (`ChatPage.tsx`)**
+    - 消息气泡 animate-fade-in + animate-slide-up
+    - 网络错误分类处理（断网、401、429）
+
+11. **Tailwind 样式配置更新 (`tailwind.config.js`)**
+    - 颜色系统：surface/background/text/border 精确匹配设计规范
+    - 字体栈：Inter + -apple-system (sans), JetBrains Mono (mono)
+    - 动画：slide-up, fade-in, slide-down keyframes
+
+12. **全局样式更新 (`globals.css`)**
+    - 自定义滚动条样式（细条、hover 变宽、跟随主题色）
+    - 输入框白色背景（对比 surface 色）
+
+### 功能通过情况
+- **135/210 tests passing**（新增 20 个）
+- Backend API:
+  - 获取内置工具列表 ✓
+  - 为角色绑定/解绑工具 ✓
+  - 自定义工具注册 ✓
+- Frontend Functional:
+  - 语音设置（ASR + TTS）✓
+  - 全局搜索 ✓
+  - 消息时间戳分隔 ✓
+  - 网络错误处理 ✓
+  - 角色创建性格模板选择 ✓
+  - 推荐角色轮播 ✓
+  - 数据导出 ✓
+  - 点赞交互 UI ✓
+  - 克隆角色 UI ✓
+- Style:
+  - 整体布局 ✓
+  - 主题色配色 ✓
+  - 深色模式 ✓
+  - 浅色模式 ✓
+  - 字体系统 ✓
+  - 消息出现动画 ✓
+  - 下拉菜单样式 ✓
+  - 滚动条样式 ✓
+
+### 发现并修复的问题
+- Alembic 迁移脚本需要手动导入 GUID 类型和显式命名 FK 约束
+- PowerShell 不支持 && 命令连接符，改用 ;
+
+### 下次应该做什么
+1. 实现 SSE 流式响应（替代 Mock AI 回复）
+2. 接入 LangChain Agent + 角色性格注入
+3. 实现 RAG 知识库功能
+4. 完善语音通话全屏页面
+5. 响应式布局（手机端/平板端）
+6. 完善剩余 75 个测试用例
+
+### 当前进度
+135/210 tests passing

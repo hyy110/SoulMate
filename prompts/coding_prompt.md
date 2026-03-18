@@ -251,43 +251,56 @@ AI/LLM:
 "
 ```
 
-### 步骤 10：推送分支并创建 Pull Request
+### 步骤 10：推送分支并创建 Pull Request（必须执行）
+
+> **这一步不可跳过。** 每次会话结束前，必须推送分支并创建 PR。
 
 #### 10.1 推送功能分支到远程
 
-```bash
-git push -u origin feature/xxx
+```powershell
+git push -u origin HEAD
 ```
 
 #### 10.2 创建 Pull Request
 
-使用 `gh` CLI 创建 PR（如果 gh 不可用，输出 PR 信息让用户手动创建）：
+使用 `gh` CLI 创建 PR。**注意：本项目在 Windows PowerShell 下运行，不支持 `\` 续行和 heredoc `<<EOF`。** 使用以下格式：
 
-```bash
-gh pr create \
-  --base master \
-  --title "feat: [用户故事名称]" \
-  --body "## 概要
+```powershell
+gh pr create --base master --title "feat: [用户故事名称]" --body "## Summary`n- [一句话描述]`n`n## Changes`n`n### Backend`n- [API 变更]`n`n### Frontend`n- [页面/组件变更]`n`n## Test`n- feature_list.json: 标记 #X, #Y, #Z 为通过`n`n## Progress`n- X/210 tests passing"
+```
+
+如果 body 内容太长导致命令行截断，可以先写入文件再引用：
+
+```powershell
+# 先把 PR body 写入临时文件
+Set-Content -Path pr-body.md -Value @"
+## Summary
 - [一句话描述本次实现的用户故事]
 
-## 变更内容
+## Changes
 
-### 后端
+### Backend
 - [具体 API 变更]
 
 ### AI/LLM
 - [具体 AI 服务变更，如无则删除此节]
 
-### 前端
+### Frontend
 - [具体页面/组件变更]
 
-## 测试验证
+## Test
 - [验证了哪些功能]
 - feature_list.json: 标记 #X, #Y, #Z 为通过
 
-## 进度
+## Progress
 - 当前: X/210 tests passing
-"
+"@
+
+# 用文件内容创建 PR
+gh pr create --base master --title "feat: [用户故事名称]" --body-file pr-body.md
+
+# 清理临时文件
+Remove-Item pr-body.md
 ```
 
 **PR 规范：**
@@ -299,14 +312,15 @@ gh pr create \
 
 #### 10.3 收尾检查
 
-**检查清单：**
+**检查清单（全部完成才能结束会话）：**
 
-1. 功能分支已推送到远程
-2. Pull Request 已创建，描述清晰完整
-3. git status 显示 clean
-4. claude-progress.txt 已更新
-5. feature_list.json 中通过的功能已标记
-6. 前后端都处于可运行状态
+1. ✅ 功能分支已推送到远程（`git push -u origin HEAD`）
+2. ✅ Pull Request 已创建，描述清晰完整（`gh pr create`）
+3. ✅ git status 显示 clean
+4. ✅ claude-progress.txt 已更新
+5. ✅ feature_list.json 中通过的功能已标记
+6. ✅ 前后端都处于可运行状态
+7. ✅ 向用户返回 PR 链接
 
 > **注意：** 不要自行合并 PR。推送分支并创建 PR 后，等待 review 或由项目维护者合并。
 
@@ -318,8 +332,8 @@ gh pr create \
 | ------------- | --------------------------------------------------------- |
 | 开始新功能    | `git checkout -b feature/xxx` 从 master 创建分支          |
 | 开发过程      | 小步提交，使用规范 commit message                         |
-| 功能完成      | `git push -u origin feature/xxx` 推送分支                 |
-| 创建 PR       | `gh pr create --base master` 创建 Pull Request            |
+| 功能完成      | `git push -u origin HEAD` 推送分支                        |
+| 创建 PR       | `gh pr create --base master --body-file pr-body.md`       |
 | 修复回归      | `git checkout -b fix/xxx` 从 master 创建分支              |
 | 分支命名      | `feature/`、`fix/`、`refactor/`、`style/`                 |
 | Commit 前缀   | `feat:`、`fix:`、`refactor:`、`style:`、`docs:`、`chore:` |
@@ -327,6 +341,7 @@ gh pr create \
 | PR 标题       | 使用 commit 前缀，如 `feat: 实现用户注册登录`             |
 | PR 内容       | 按 后端/AI/前端/测试 分节，附进度                         |
 | 禁止操作      | 不在 master 直接开发，不 force push，不自行合并 PR        |
+| Shell 注意    | PowerShell 下用 `;` 分隔命令，不能用 `&&` `\` `<<EOF`    |
 
 ---
 
@@ -357,6 +372,8 @@ gh pr create \
 
 - **开发方式：** 全栈实现，后端 + AI 服务 + 前端一起做，不要只做半截
 - **Git 规范：** 功能分支开发，小步提交，合并回 master
+- **会话结束前必须：** `git push -u origin HEAD` + `gh pr create` 推送并创建 PR，返回 PR 链接
+- **Shell 环境：** Windows PowerShell，不支持 `&&`（用 `;`）、不支持 `\` 续行、不支持 `<<EOF` heredoc
 - **总目标：** 210 个功能全部通过的生产级应用
 - **本次目标：** 完整实现一个用户故事，覆盖涉及的所有层
 - **优先级：** 修复回归 > 完成用户故事 > 优化体验

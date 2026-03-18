@@ -1,6 +1,9 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { useAuthStore } from '../../stores/authStore';
+import { getCharacters, type Character } from '../../api/characters';
+import { debounce } from '../../utils';
 
 const navLinks = [
   { to: '/', label: '首页' },
@@ -17,15 +20,176 @@ const sidebarLinks = [
   { to: '/settings', label: '设置' },
 ];
 
-export default function MainLayout() {
-  const location = useLocation();
+function GlobalSearch() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Character[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const doSearch = useCallback(
+    debounce((q: string) => {
+      if (!q.trim()) {
+        setResults([]);
+        setIsSearching(false);
+        return;
+      }
+      setIsSearching(true);
+      getCharacters(1, 6, q)
+        .then((res) => setResults(res.items))
+        .catch(() => setResults([]))
+        .finally(() => setIsSearching(false));
+    }, 300),
+    [],
+  );
+
+  useEffect(() => {
+    doSearch(query);
+  }, [query, doSearch]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative hidden w-64 md:block">
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light-secondary dark:text-text-dark-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setShowResults(true)}
+          placeholder="搜索角色..."
+          className="w-full rounded-lg border border-border-light bg-gray-50 py-2 pl-9 pr-3 text-sm transition-colors placeholder:text-text-light-secondary focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary-500/20 dark:border-border-dark dark:bg-gray-800 dark:placeholder:text-text-dark-secondary dark:focus:bg-gray-700"
+        />
+      </div>
+      {showResults && (query.trim() || results.length > 0) && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border-light bg-white shadow-lg dark:border-border-dark dark:bg-surface-dark">
+          {isSearching ? (
+            <div className="px-4 py-3 text-center text-sm text-text-light-secondary dark:text-text-dark-secondary">
+              搜索中...
+            </div>
+          ) : results.length > 0 ? (
+            <div className="max-h-72 overflow-y-auto py-1">
+              {results.map((char) => (
+                <button
+                  key={char.id}
+                  onClick={() => {
+                    navigate(`/character/${char.id}`);
+                    setShowResults(false);
+                    setQuery('');
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-xs font-bold text-white">
+                    {char.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{char.name}</p>
+                    <p className="truncate text-xs text-text-light-secondary dark:text-text-dark-secondary">
+                      {char.description || '暂无简介'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : query.trim() ? (
+            <div className="px-4 py-3 text-center text-sm text-text-light-secondary dark:text-text-dark-secondary">
+              未找到相关角色
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UserDropdown() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  if (!user) return null;
+
+  const menuItems = [
+    { label: '个人中心', to: '/profile' },
+    { label: '音色管理', to: '/profile/voices' },
+    { label: '设置', to: '/settings' },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-white">
+          {(user.nickname || user.username).charAt(0).toUpperCase()}
+        </div>
+        <span className="hidden font-medium sm:inline">
+          {user.nickname || user.username}
+        </span>
+        <svg className={clsx('h-4 w-4 transition-transform', open && 'rotate-180')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-xl border border-border-light bg-white py-1 shadow-lg animate-slide-down dark:border-border-dark dark:bg-surface-dark">
+          <div className="border-b border-border-light px-4 py-2.5 dark:border-border-dark">
+            <p className="truncate text-sm font-medium">{user.nickname || user.username}</p>
+            <p className="truncate text-xs text-text-light-secondary dark:text-text-dark-secondary">{user.email}</p>
+          </div>
+          {menuItems.map((item) => (
+            <button
+              key={item.to}
+              onClick={() => {
+                navigate(item.to);
+                setOpen(false);
+              }}
+              className="flex w-full items-center px-4 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              {item.label}
+            </button>
+          ))}
+          <div className="border-t border-border-light dark:border-border-dark">
+            <button
+              onClick={() => {
+                logout();
+                navigate('/login', { replace: true });
+              }}
+              className="flex w-full items-center px-4 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              退出登录
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function MainLayout() {
+  const location = useLocation();
 
   return (
     <div className="flex h-screen flex-col bg-background-light dark:bg-background-dark">
@@ -53,27 +217,9 @@ export default function MainLayout() {
             ))}
           </nav>
 
-          {/* User area */}
           <div className="flex items-center gap-3">
-            {user && (
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-white">
-                  {(user.nickname || user.username).charAt(0).toUpperCase()}
-                </div>
-                <span className="hidden font-medium sm:inline">
-                  {user.nickname || user.username}
-                </span>
-              </Link>
-            )}
-            <button
-              onClick={handleLogout}
-              className="rounded-lg px-3 py-1.5 text-sm text-text-light-secondary transition-colors hover:bg-red-50 hover:text-red-600 dark:text-text-dark-secondary dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            >
-              退出
-            </button>
+            <GlobalSearch />
+            <UserDropdown />
           </div>
         </div>
       </header>

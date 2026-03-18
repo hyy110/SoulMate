@@ -125,3 +125,13 @@ export async function getPersonalityTemplates(): Promise<PersonalityTemplate[]> 
   const res = await apiClient.get<PersonalityTemplate[]>('/characters/personality-templates');
   return res.data;
 }
+
+export async function getPublishedCharacters(
+  page = 1,
+  page_size = 10,
+): Promise<PaginatedResponse<Character>> {
+  const res = await apiClient.get<PaginatedResponse<Character>>('/explore', {
+    params: { page, page_size },
+  });
+  return res.data;
+}

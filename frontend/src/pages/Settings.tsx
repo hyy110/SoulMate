@@ -5,6 +5,7 @@ import { showSuccess, showError } from '../components/UI/Toast';
 
 const TABS = [
   { key: 'appearance', label: '外观' },
+  { key: 'voice', label: '语音' },
   { key: 'account', label: '账号' },
   { key: 'about', label: '关于' },
 ] as const;
@@ -204,7 +205,134 @@ function AccountTab() {
   );
 }
 
+function VoiceTab() {
+  const [asrLanguage, setAsrLanguage] = useState(() => localStorage.getItem('asr_language') || 'zh');
+  const [ttsSpeed, setTtsSpeed] = useState(() => parseFloat(localStorage.getItem('tts_speed') || '1.0'));
+  const [autoPlayVoice, setAutoPlayVoice] = useState(() => localStorage.getItem('auto_play_voice') !== 'false');
+
+  const handleSave = () => {
+    localStorage.setItem('asr_language', asrLanguage);
+    localStorage.setItem('tts_speed', String(ttsSpeed));
+    localStorage.setItem('auto_play_voice', String(autoPlayVoice));
+    showSuccess('语音设置已保存');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-3 text-base font-semibold">语音识别 (ASR)</h3>
+        <div className="card space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium">默认识别语言</label>
+            <select
+              value={asrLanguage}
+              onChange={(e) => setAsrLanguage(e.target.value)}
+              className="input-field"
+            >
+              <option value="zh">中文</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="auto">自动检测</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-base font-semibold">语音合成 (TTS)</h3>
+        <div className="card space-y-4">
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">语速: {ttsSpeed.toFixed(1)}x</label>
+              <button
+                onClick={() => setTtsSpeed(1.0)}
+                className="text-xs text-primary-600 hover:text-primary-500"
+              >
+                重置
+              </button>
+            </div>
+            <input
+              type="range"
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              value={ttsSpeed}
+              onChange={(e) => setTtsSpeed(Number(e.target.value))}
+              className="mt-2 w-full accent-primary-600"
+            />
+            <div className="mt-1 flex justify-between text-xs text-text-light-secondary dark:text-text-dark-secondary">
+              <span>0.5x 慢</span>
+              <span>1.0x 正常</span>
+              <span>2.0x 快</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">自动播放语音回复</p>
+              <p className="text-xs text-text-light-secondary dark:text-text-dark-secondary">
+                收到 AI 语音回复时自动播放
+              </p>
+            </div>
+            <button
+              onClick={() => setAutoPlayVoice(!autoPlayVoice)}
+              className={clsx(
+                'relative h-6 w-11 rounded-full transition-colors',
+                autoPlayVoice ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600',
+              )}
+            >
+              <span
+                className={clsx(
+                  'absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform shadow-sm',
+                  autoPlayVoice && 'translate-x-5',
+                )}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button onClick={handleSave} className="btn-primary w-full py-2.5">
+        保存语音设置
+      </button>
+    </div>
+  );
+}
+
 function AboutTab() {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const [charsRes, convsRes] = await Promise.all([
+        apiClient.get('/characters', { params: { page: 1, page_size: 100 } }),
+        apiClient.get('/conversations'),
+      ]);
+
+      const exportData = {
+        export_date: new Date().toISOString(),
+        version: '0.1.0',
+        characters: charsRes.data.items ?? charsRes.data,
+        conversations: convsRes.data,
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `soulmate-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showSuccess('数据导出成功');
+    } catch {
+      showError('导出失败');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="card text-center">
@@ -217,6 +345,28 @@ function AboutTab() {
         <p className="mt-2 text-sm text-text-light-secondary dark:text-text-dark-secondary">
           AI 灵魂伴侣 - 创建和对话你的 AI 角色
         </p>
+      </div>
+
+      {/* Data Export */}
+      <div className="card space-y-3">
+        <h3 className="font-semibold">数据管理</h3>
+        <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">
+          导出你的角色和对话数据为 JSON 格式。
+        </p>
+        <button
+          onClick={handleExportData}
+          disabled={isExporting}
+          className="btn-secondary flex w-full items-center justify-center gap-2 py-2.5"
+        >
+          {isExporting ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          )}
+          {isExporting ? '导出中...' : '导出数据'}
+        </button>
       </div>
 
       <div className="card space-y-3">
@@ -310,6 +460,7 @@ export default function Settings() {
 
       {/* Tab Content */}
       {activeTab === 'appearance' && <AppearanceTab />}
+      {activeTab === 'voice' && <VoiceTab />}
       {activeTab === 'account' && <AccountTab />}
       {activeTab === 'about' && <AboutTab />}
     </div>
