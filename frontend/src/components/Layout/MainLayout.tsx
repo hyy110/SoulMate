@@ -190,6 +190,7 @@ function UserDropdown() {
 
 export default function MainLayout() {
   const location = useLocation();
+  const { user } = useAuthStore();
 
   return (
     <div className="flex h-screen flex-col bg-background-light dark:bg-background-dark">
