@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { getCharacters, type Character } from '../api/characters';
 import { getConversations, type Conversation } from '../api/conversations';
+import { getPublishedCharacters } from '../api/characters';
 import { formatRelativeTime } from '../utils';
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
@@ -78,6 +79,104 @@ function ConversationCard({ conversation }: { conversation: Conversation }) {
   );
 }
 
+function RecommendedCarousel({ characters }: { characters: Character[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const scrollToIndex = useCallback((idx: number) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const cardWidth = 280 + 16;
+    container.scrollTo({ left: idx * cardWidth, behavior: 'smooth' });
+    setCurrentIndex(idx);
+  }, []);
+
+  useEffect(() => {
+    if (characters.length === 0) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => {
+        const next = (prev + 1) % characters.length;
+        scrollToIndex(next);
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [characters.length, scrollToIndex]);
+
+  if (characters.length === 0) return null;
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">推荐角色</h2>
+        <Link
+          to="/explore"
+          className="text-sm font-medium text-primary-600 hover:text-primary-500"
+        >
+          查看全部 →
+        </Link>
+      </div>
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scroll-smooth pb-2 scrollbar-hide"
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
+          {characters.map((char) => (
+            <Link
+              key={char.id}
+              to={`/character/${char.id}`}
+              className="w-[280px] flex-shrink-0 scroll-snap-start"
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              <div className="card group relative h-[180px] overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-pink-500/10 dark:from-primary-500/20 dark:to-pink-500/20" />
+                <div className="relative z-10 flex h-full flex-col justify-between p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-lg font-bold text-white">
+                      {char.avatar_url ? (
+                        <img src={char.avatar_url} alt={char.name} className="h-full w-full rounded-full object-cover" />
+                      ) : (
+                        char.name.charAt(0)
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                        {char.name}
+                      </h3>
+                      <span className="text-xs text-text-light-secondary dark:text-text-dark-secondary">
+                        {char.chat_count} 次对话
+                      </span>
+                    </div>
+                  </div>
+                  <p className="line-clamp-2 text-sm text-text-light-secondary dark:text-text-dark-secondary">
+                    {char.description || char.greeting_message || '等你来聊~'}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+        {characters.length > 1 && (
+          <div className="mt-3 flex justify-center gap-1.5">
+            {characters.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollToIndex(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === currentIndex
+                    ? 'w-6 bg-primary-600'
+                    : 'w-1.5 bg-gray-300 dark:bg-gray-600'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ConversationSkeleton() {
   return (
     <div className="card">
@@ -99,6 +198,7 @@ export default function Home() {
   const { user } = useAuthStore();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [recommended, setRecommended] = useState<Character[]>([]);
   const [isLoadingChars, setIsLoadingChars] = useState(true);
   const [isLoadingConvs, setIsLoadingConvs] = useState(true);
 
@@ -112,6 +212,10 @@ export default function Home() {
       .then((convs) => setConversations(convs.slice(0, 5)))
       .catch(() => {})
       .finally(() => setIsLoadingConvs(false));
+
+    getPublishedCharacters(1, 8)
+      .then((res) => setRecommended(res.items))
+      .catch(() => {});
   }, []);
 
   return (
@@ -158,6 +262,9 @@ export default function Home() {
           </p>
         </Link>
       </section>
+
+      {/* Recommended Carousel */}
+      {recommended.length > 0 && <RecommendedCarousel characters={recommended} />}
 
       {/* Recent Conversations */}
       <section>

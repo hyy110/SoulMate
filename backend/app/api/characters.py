@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.character import Character, Favorite
+from app.models.tool import Tool
 from app.models.user import User
 from app.models.voice_profile import VoiceProfile
 from app.schemas.character import (
@@ -416,3 +417,88 @@ def unlike_character(
     character.like_count = max((character.like_count or 0) - 1, 0)
     db.commit()
     return {"message": "已取消点赞", "liked": False}
+
+
+@router.get("/{character_id}/tools")
+def get_character_tools(
+    character_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+    if character.creator_id != current_user.id and not character.is_public:
+        raise HTTPException(status_code=403, detail="无权访问")
+
+    tools = db.query(Tool).filter(Tool.character_id == character.id).all()
+    return [
+        {
+            "id": str(t.id),
+            "name": t.name,
+            "description": t.description,
+            "tool_type": t.tool_type,
+            "parameters": t.config_json,
+            "is_enabled": t.is_enabled,
+        }
+        for t in tools
+    ]
+
+
+@router.put("/{character_id}/tools")
+def bind_character_tools(
+    character_id: str,
+    body: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+    if character.creator_id != current_user.id:
+        raise HTTPException(status_code=403, detail="无权操作")
+
+    tool_ids = body.get("tool_ids", [])
+
+    db.query(Tool).filter(
+        Tool.character_id == character.id,
+        Tool.tool_type == "builtin",
+    ).delete(synchronize_session="fetch")
+
+    from app.api.tools import BUILTIN_TOOLS
+
+    for tid in tool_ids:
+        if tid.startswith("builtin-"):
+            bt = next((b for b in BUILTIN_TOOLS if b["id"] == tid), None)
+            if bt:
+                tool = Tool(
+                    name=bt["name"],
+                    description=bt["description"],
+                    tool_type="builtin",
+                    config_json=bt.get("parameters"),
+                    is_enabled=True,
+                    character_id=character.id,
+                    creator_id=current_user.id,
+                )
+                db.add(tool)
+        else:
+            try:
+                tool_uuid = uuid.UUID(tid)
+            except ValueError:
+                continue
+            existing = db.query(Tool).filter(Tool.id == tool_uuid).first()
+            if existing:
+                existing.character_id = character.id
+
+    db.commit()
+    tools = db.query(Tool).filter(Tool.character_id == character.id).all()
+    return [
+        {
+            "id": str(t.id),
+            "name": t.name,
+            "description": t.description,
+            "tool_type": t.tool_type,
+            "is_enabled": t.is_enabled,
+        }
+        for t in tools
+    ]

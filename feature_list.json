@@ -737,7 +737,7 @@
       "步骤 2: 验证返回内置工具列表（天气、搜索、提醒、计算等）",
       "步骤 3: 每个工具包含 name, description, parameters schema"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -783,7 +783,7 @@
       "步骤 3: GET /api/characters/:id/tools，验证返回绑定的工具",
       "步骤 4: PUT /api/characters/:id/tools，body: {tool_ids: []}，验证解绑成功"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -794,7 +794,7 @@
       "步骤 3: GET /api/tools/:id 验证工具信息正确",
       "步骤 4: 将工具绑定到角色并测试调用"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1145,7 +1145,7 @@
       "步骤 5: 保存设置",
       "步骤 6: 进入聊天验证设置生效"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1168,7 +1168,7 @@
       "步骤 3: 点击角色结果导航到角色详情",
       "步骤 4: 点击对话结果导航到聊天页面"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1179,7 +1179,7 @@
       "步骤 3: 验证消息按日期分组（今天、昨天等）",
       "步骤 4: 验证时间戳格式正确"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1227,7 +1227,7 @@
       "步骤 4: 验证显示 Toast 错误提示而非白屏",
       "步骤 5: 恢复网络后验证自动重连"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1330,7 +1330,7 @@
       "步骤 4: 验证用户可以在模板基础上继续编辑",
       "步骤 5: 切换到另一个模板验证内容更新"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1355,7 +1355,7 @@
       "步骤 4: 验证可左右滑动浏览",
       "步骤 5: 点击角色进入详情页"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1407,7 +1407,7 @@
       "步骤 3: 验证下载文件（JSON/ZIP 格式）",
       "步骤 4: 验证导出数据包含角色、对话、消息等"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1431,7 +1431,7 @@
       "步骤 4: 再次点击取消点赞，图标恢复空心",
       "步骤 5: 验证点赞数-1"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1443,7 +1443,7 @@
       "步骤 4: 确认后验证角色出现在我的角色列表中",
       "步骤 5: 验证克隆的角色为草稿状态"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1584,7 +1584,7 @@
       "步骤 3: 验证侧边栏宽度合适（约 280px）",
       "步骤 4: 验证主内容区居中且最大宽度受限"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1596,7 +1596,7 @@
       "步骤 4: 验证输入框聚焦时边框为主题色",
       "步骤 5: 验证整体色调传达温暖、浪漫感"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1609,7 +1609,7 @@
       "步骤 5: 验证所有页面在深色模式下无文字不可读的情况",
       "步骤 6: 验证图标和按钮在深色模式下清晰可见"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1621,7 +1621,7 @@
       "步骤 4: 验证文字色为 #0F172A",
       "步骤 5: 验证边框色为 #E2E8F0"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1632,7 +1632,7 @@
       "步骤 3: 验证消息气泡文字为 16px, leading-normal",
       "步骤 4: 验证代码块使用 JetBrains Mono, Consolas, monospace"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1724,7 +1724,7 @@
       "步骤 4: 验证淡入效果（opacity 0->1）",
       "步骤 5: 验证动画时长约 300ms"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1978,7 +1978,7 @@
       "步骤 3: 验证菜单项 hover 时背景高亮",
       "步骤 4: 验证菜单出现有微小的动画"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2000,7 +2000,7 @@
       "步骤 3: 验证滚动条颜色与主题匹配",
       "步骤 4: 验证 hover 时滚动条变宽"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
