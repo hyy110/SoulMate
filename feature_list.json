@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "category": "functional",
     "description": "FastAPI 后端服务启动：运行 uvicorn 启动 FastAPI 应用，访问 /docs 能看到 Swagger 文档",
@@ -632,7 +632,7 @@
       "步骤 3: 验证返回 {status, progress: 0.0-1.0, estimated_time}",
       "步骤 4: 验证训练完成后 status 变为 ready"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -644,7 +644,7 @@
       "步骤 4: 验证音色已从列表中移除",
       "步骤 5: 验证不能删除预设音色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

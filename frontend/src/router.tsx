@@ -11,6 +11,7 @@ const CharacterEdit = lazy(() => import('./pages/CharacterEdit'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const VoiceCall = lazy(() => import('./pages/VoiceCall'));
 const Profile = lazy(() => import('./pages/Profile'));
+const VoiceProfiles = lazy(() => import('./pages/VoiceProfiles'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -64,6 +65,7 @@ const routes: RouteObject[] = [
       { path: 'chat/:conversationId', element: <ChatPage /> },
       { path: 'voice/:conversationId', element: <VoiceCall /> },
       { path: 'profile', element: <Profile /> },
+      { path: 'profile/voices', element: <VoiceProfiles /> },
       { path: 'settings', element: <Settings /> },
       { path: 'user/:userId', element: <UserPage /> },
     ],
