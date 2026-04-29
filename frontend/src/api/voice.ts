@@ -24,6 +24,12 @@ export interface VoiceTrainingStatus {
 export interface VoiceCallSession {
   session_id: string;
   conversation_id: string;
+  character_id: string;
+  character_name: string;
+  voice_id: string;
+  voice_name: string;
+  voice_type: string;
+  is_preset_voice: boolean;
   ws_url: string;
 }
 
@@ -94,10 +100,10 @@ export async function previewVoice(data: VoicePreviewRequest): Promise<Blob> {
 
 // Backward-compatible voice call API wrappers.
 export async function startVoiceCall(conversationId: string): Promise<VoiceCallSession> {
-  const res = await apiClient.post<VoiceCallSession>(`/voice/call/${conversationId}/start`);
+  const res = await apiClient.post<VoiceCallSession>(`/voices/call/${conversationId}/start`);
   return res.data;
 }
 
 export async function endVoiceCall(sessionId: string): Promise<void> {
-  await apiClient.post(`/voice/call/${sessionId}/end`);
+  await apiClient.post(`/voices/call/${sessionId}/end`);
 }

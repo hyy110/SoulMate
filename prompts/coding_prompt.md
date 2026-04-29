@@ -251,9 +251,35 @@ AI/LLM:
 "
 ```
 
+#### 9.1 Commit 执行要求（必须执行）
+
+在会话结束前，必须完成至少 1 次规范 commit。不要只改代码不提交。
+
+```powershell
+# 检查变更
+git status
+
+# 添加本次用户故事相关改动
+git add .
+
+# 提交（遵循 feat/fix/refactor/style/docs/chore 前缀）
+git commit -m "feat: 完成[用户故事名称] - 全栈实现并验证"
+```
+
+若提交失败（例如 lint/hook），先修复后重新提交，禁止跳过提交步骤。
+
 ### 步骤 10：推送分支并创建 Pull Request（必须执行）
 
 > **这一步不可跳过。** 每次会话结束前，必须推送分支并创建 PR。
+
+#### 10.0 一键收尾顺序（严格按顺序）
+
+1. `git commit`
+2. `git push -u origin HEAD`
+3. `gh pr create`
+4. 将 PR 链接返回给用户
+
+如果任何一步失败，先修复失败原因再继续，不可跳过。
 
 #### 10.1 推送功能分支到远程
 
