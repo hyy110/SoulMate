@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.api import auth, characters, conversations, explore, tools, upload, voice
+from app.api import auth, characters, conversations, explore, knowledge, tools, upload, voice
 from app.api import settings as settings_api
 
 app = FastAPI(title=settings.APP_NAME, docs_url="/docs", redoc_url="/redoc")
@@ -36,3 +36,4 @@ app.include_router(settings_api.router)
 app.include_router(tools.router)
 app.include_router(upload.router)
 app.include_router(voice.router)
+app.include_router(knowledge.router)

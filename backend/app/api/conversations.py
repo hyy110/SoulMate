@@ -10,9 +10,11 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.character import Character
 from app.models.conversation import Conversation
+from app.models.knowledge_base import KnowledgeBase
 from app.models.message import Message
 from app.models.user import User
 from app.security import get_current_user
+from app.services.rag_service import rag_service
 
 
 # ---------------------------------------------------------------------------
@@ -247,10 +249,19 @@ def send_message(
     db.add(user_msg)
 
     char_name = character.name if character else "AI"
+    knowledge_hint = ""
+    if character and character.knowledge_base_id:
+        kb = db.query(KnowledgeBase).filter(KnowledgeBase.id == character.knowledge_base_id).first()
+        if kb:
+            hits = rag_service.search(kb, body.content, top_k=2)
+            if hits:
+                snippets = "；".join(hit["content"][:80] for hit in hits)
+                knowledge_hint = f"（参考知识库：{snippets}）"
+
     ai_reply = Message(
         conversation_id=conv.id,
         role="assistant",
-        content=f"我是{char_name}，你说的是：{body.content}",
+        content=f"我是{char_name}，你说的是：{body.content}{knowledge_hint}",
     )
     db.add(ai_reply)
 

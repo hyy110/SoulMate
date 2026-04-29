@@ -225,6 +225,9 @@ export default function CharacterDetail() {
             <button onClick={handlePublish} className="btn-secondary">
               {character.status === 'published' ? '取消发布' : '发布'}
             </button>
+            <Link to={`/character/${character.id}/knowledge`} className="btn-secondary">
+              知识库
+            </Link>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="btn-secondary text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
