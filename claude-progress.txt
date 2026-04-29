@@ -595,3 +595,110 @@
 
 ### 当前进度
 142/210 tests passing
+
+---
+
+## 会话 9 — 语音通话绑定角色音色 (2026-04-29)
+
+### 用户故事：角色绑定音色在语音通话中生效（后端接口 + 前端通话页联动）
+
+### 本次完成的工作
+
+1. **后端通话会话接口补齐 (`backend/app/api/voice.py`)**
+   - 新增 `POST /api/voices/call/:conversation_id/start`
+   - 新增 `POST /api/voices/call/:session_id/end`
+   - 启动通话时根据对话角色解析实际使用音色：
+     - 优先使用角色绑定的 `voice_profile_id`
+     - 若未绑定或不可用，回退到预设音色
+   - 返回会话信息中包含 `voice_id / voice_name / voice_type / is_preset_voice`
+   - 增加通话会话内存态 `ACTIVE_CALLS` 与用户权限校验
+
+2. **前端语音 API 对齐 (`frontend/src/api/voice.ts`)**
+   - 通话接口路径统一到 `/voices/call/...`
+   - 扩展 `VoiceCallSession` 类型，包含角色与音色信息字段
+
+3. **前端语音通话页实现 (`frontend/src/pages/VoiceCall.tsx`)**
+   - 页面加载自动调用 `startVoiceCall`
+   - 展示角色名、通话时长、当前使用音色（预设/自定义）
+   - 提供静音按钮与挂断按钮
+   - 挂断时调用 `endVoiceCall` 并返回聊天页
+
+4. **聊天页接入语音入口 (`frontend/src/pages/ChatPage.tsx`)**
+   - 顶栏新增“语音通话”按钮，跳转 `/voice/:conversationId`
+
+### 功能通过情况
+- **143/210 tests passing**（新增 1 个）
+- 角色绑定音色：创建/编辑角色关联 voice_id，语音通话使用绑定音色 ✓
+
+### 验证与回归
+- 代码级验证通过：
+  - `python -m compileall backend/app` 通过
+  - 修改文件 IDE lints 无报错
+- 已知历史阻塞仍存在：
+  - 前端完整 `npm run build` 仍受既有 `vite.config.ts` / `tsconfig.node.json` 配置问题影响（本次未改动该历史项）
+
+### 下次应该做什么
+1. 继续补齐语音通话全屏体验（状态机、实时字幕、波形、打断）
+2. 推进 Function Call 工具调用闭环（天气/计算/时间）
+3. 补完音色管理页面未通过项（创建流程与样式规范）
+
+### 当前进度
+143/210 tests passing
+
+---
+
+## 会话 10 — 语音通话全屏体验与控制完善 (2026-04-29)
+
+### 用户故事：语音通话页面与静音交互（后端会话接口 + 前端全屏 UI）
+
+### 本次完成的工作
+
+1. **后端语音通话会话补齐 (`backend/app/api/voice.py`)**
+   - 新增 `POST /api/voices/call/:conversation_id/start`
+   - 新增 `POST /api/voices/call/:session_id/end`
+   - 启动通话时按角色解析当前生效音色：
+     - 优先角色绑定自定义音色
+     - 回退预设音色
+   - 返回通话元数据：角色名、音色名、音色类型、是否预设音色
+   - 增加会话内存管理与用户权限校验
+
+2. **前端语音 API 对齐 (`frontend/src/api/voice.ts`)**
+   - 通话接口路径统一为 `/voices/call/...`
+   - `VoiceCallSession` 增加角色/音色字段，供 UI 展示
+
+3. **语音通话全屏页增强 (`frontend/src/pages/VoiceCall.tsx`)**
+   - 全屏深色径向渐变背景
+   - 角色大头像 + 呼吸灯效果
+   - 通话时长计时
+   - 状态提示（listening / thinking / speaking / paused / muted）
+   - 波形条动态可视化
+   - 控制按钮：静音、扬声器、暂停/继续、挂断
+   - 挂断后展示通话摘要并返回聊天页
+   - 进入页面自动建立通话会话，离开时正常结束
+
+4. **聊天页入口补强 (`frontend/src/pages/ChatPage.tsx`)**
+   - 顶栏新增“语音通话”按钮，直达 `/voice/:conversationId`
+
+### 功能通过情况
+- **149/210 tests passing**（新增 6 个）
+- 语音通话全屏页面 ✓
+- 语音通话静音功能 ✓
+- 语音通话呼吸灯动画 ✓
+- 语音通话深色背景 ✓
+- 语音通话页面布局 ✓
+- 语音通话控制按钮样式 ✓
+
+### 验证与回归
+- 代码级验证通过：
+  - `python -m compileall backend/app` 通过
+  - 修改文件 IDE lints 无报错
+- 历史问题仍在：
+  - 前端完整构建受既有 `vite.config.ts` / `tsconfig.node.json` 配置问题影响（本次未触碰该问题）
+
+### 下次应该做什么
+1. 推进工具调用主线（天气/计算/时间）并完成聊天工具事件展示联动
+2. 补齐音色管理页面未通过项（完整创建流程与训练进度视觉规范）
+3. 继续完善语音通话真实链路（实时字幕与中断行为后端联动）
+
+### 当前进度
+149/210 tests passing

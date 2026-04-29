@@ -5,6 +5,7 @@ import uuid
 import wave
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
@@ -12,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.character import Character
+from app.models.conversation import Conversation
 from app.models.user import User
 from app.models.voice_profile import VoiceProfile
 from app.schemas.voice import VoicePreviewRequest, VoiceResponse, VoiceTrainStatusResponse
@@ -53,6 +55,8 @@ PRESET_VOICES: list[dict] = [
     },
 ]
 
+ACTIVE_CALLS: dict[str, dict[str, Any]] = {}
+
 
 def _voice_to_response(voice: VoiceProfile) -> VoiceResponse:
     return VoiceResponse(
@@ -88,6 +92,26 @@ def _preset_to_response(item: dict) -> VoiceResponse:
 
 def _is_preset_voice(voice_id: str) -> bool:
     return any(v["id"] == voice_id for v in PRESET_VOICES)
+
+
+def _resolve_call_voice(character: Character, current_user: User, db: Session) -> dict[str, Any]:
+    if character.voice_profile_id:
+        voice = db.query(VoiceProfile).filter(VoiceProfile.id == character.voice_profile_id).first()
+        if voice and (voice.creator_id == character.creator_id or voice.creator_id == current_user.id):
+            return {
+                "voice_id": str(voice.id),
+                "voice_name": voice.name,
+                "voice_type": voice.voice_type,
+                "is_preset": False,
+            }
+
+    fallback = PRESET_VOICES[0]
+    return {
+        "voice_id": fallback["id"],
+        "voice_name": fallback["name"],
+        "voice_type": fallback["voice_type"],
+        "is_preset": True,
+    }
 
 
 def _get_custom_voice_or_404(voice_id: str, current_user: User, db: Session) -> VoiceProfile:
@@ -294,3 +318,57 @@ def preview_voice(
 
     wav_bytes = _build_preview_wav(body.text)
     return StreamingResponse(io.BytesIO(wav_bytes), media_type="audio/wav")
+
+
+@router.post("/call/{conversation_id}/start")
+def start_voice_call(
+    conversation_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="对话不存在")
+    if conv.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="无权访问此对话")
+
+    character = db.query(Character).filter(Character.id == conv.character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    call_voice = _resolve_call_voice(character, current_user, db)
+    session_id = uuid.uuid4().hex
+    ACTIVE_CALLS[session_id] = {
+        "conversation_id": str(conv.id),
+        "user_id": str(current_user.id),
+        "character_id": str(character.id),
+        "voice": call_voice,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    return {
+        "session_id": session_id,
+        "conversation_id": str(conv.id),
+        "character_id": str(character.id),
+        "character_name": character.name,
+        "voice_id": call_voice["voice_id"],
+        "voice_name": call_voice["voice_name"],
+        "voice_type": call_voice["voice_type"],
+        "is_preset_voice": call_voice["is_preset"],
+        "ws_url": f"/api/voice/ws/{conv.id}",
+    }
+
+
+@router.post("/call/{session_id}/end")
+def end_voice_call(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    session = ACTIVE_CALLS.get(session_id)
+    if not session:
+        return {"message": "通话已结束"}
+    if session["user_id"] != str(current_user.id):
+        raise HTTPException(status_code=403, detail="无权结束此通话")
+
+    ACTIVE_CALLS.pop(session_id, None)
+    return {"message": "通话已结束"}

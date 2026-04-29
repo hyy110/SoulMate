@@ -655,7 +655,7 @@
       "步骤 3: 验证角色详情中 voice_id 正确",
       "步骤 4: 进行语音通话，验证 AI 回复使用该音色"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1039,7 +1039,7 @@
       "步骤 9: 点击挂断验证返回聊天页面",
       "步骤 10: 验证显示通话摘要"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1051,7 +1051,7 @@
       "步骤 4: 说话验证 AI 无法听到（不触发回复）",
       "步骤 5: 取消静音验证恢复正常"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1746,7 +1746,7 @@
       "步骤 3: 验证动画颜色为主题色",
       "步骤 4: 验证动画循环流畅"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1757,7 +1757,7 @@
       "步骤 3: 验证控制按钮在深色背景上清晰可见",
       "步骤 4: 验证整体氛围沉浸感强"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1876,7 +1876,7 @@
       "步骤 5: 验证控制按钮在底部水平排列",
       "步骤 6: 验证挂断按钮为红色醒目样式"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2102,7 +2102,7 @@
       "步骤 4: 验证挂断按钮为红色背景、更大尺寸",
       "步骤 5: 验证按钮 hover/active 有反馈效果"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",

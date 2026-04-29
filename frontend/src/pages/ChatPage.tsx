@@ -263,6 +263,14 @@ export default function ChatPage() {
             </p>
           )}
         </div>
+        {conversationId && (
+          <button
+            onClick={() => navigate(`/voice/${conversationId}`)}
+            className="rounded-lg border border-border-light px-3 py-1.5 text-sm text-text-light-secondary transition-colors hover:bg-gray-100 dark:border-border-dark dark:text-text-dark-secondary dark:hover:bg-gray-800"
+          >
+            语音通话
+          </button>
+        )}
       </div>
 
       {/* Messages */}
