@@ -277,7 +277,8 @@ git commit -m "feat: 完成[用户故事名称] - 全栈实现并验证"
 1. `git commit`
 2. `git push -u origin HEAD`
 3. `gh pr create`
-4. 将 PR 链接返回给用户
+4. 使用 CLI 合并到 `main/master`
+5. 向用户确认“已合入”
 
 如果任何一步失败，先修复失败原因再继续，不可跳过。
 
@@ -346,9 +347,26 @@ Remove-Item pr-body.md
 4. ✅ claude-progress.txt 已更新
 5. ✅ feature_list.json 中通过的功能已标记
 6. ✅ 前后端都处于可运行状态
-7. ✅ 向用户返回 PR 链接
+7. ✅ PR 已通过 CLI 合入 `master/main`（`gh pr merge`）
 
-> **注意：** 不要自行合并 PR。推送分支并创建 PR 后，等待 review 或由项目维护者合并。
+#### 10.4 使用 CLI 合并 PR（必须执行）
+
+创建 PR 后，不要停在“返回链接”阶段，必须继续执行 CLI 合并。
+
+```powershell
+# 优先直接 squash 合并（推荐）
+gh pr merge --squash --delete-branch
+
+# 若受保护分支要求检查完成，启用自动合并
+gh pr merge --auto --squash
+```
+
+执行后需再次检查：
+
+```powershell
+git status
+gh pr view --json state,mergeStateStatus,url
+```
 
 ---
 
@@ -360,13 +378,14 @@ Remove-Item pr-body.md
 | 开发过程      | 小步提交，使用规范 commit message                         |
 | 功能完成      | `git push -u origin HEAD` 推送分支                        |
 | 创建 PR       | `gh pr create --base master --body-file pr-body.md`       |
+| CLI 合并 PR   | `gh pr merge --squash --delete-branch`（失败则 `--auto`） |
 | 修复回归      | `git checkout -b fix/xxx` 从 master 创建分支              |
 | 分支命名      | `feature/`、`fix/`、`refactor/`、`style/`                 |
 | Commit 前缀   | `feat:`、`fix:`、`refactor:`、`style:`、`docs:`、`chore:` |
 | Commit 作用域 | `(backend)`、`(frontend)`、`(ai)`、`(全局不加)`           |
 | PR 标题       | 使用 commit 前缀，如 `feat: 实现用户注册登录`             |
 | PR 内容       | 按 后端/AI/前端/测试 分节，附进度                         |
-| 禁止操作      | 不在 master 直接开发，不 force push，不自行合并 PR        |
+| 禁止操作      | 不在 master 直接开发，不 force push，不跳过合并步骤       |
 | Shell 注意    | PowerShell 下用 `;` 分隔命令，不能用 `&&` `\` `<<EOF`    |
 
 ---
@@ -398,7 +417,7 @@ Remove-Item pr-body.md
 
 - **开发方式：** 全栈实现，后端 + AI 服务 + 前端一起做，不要只做半截
 - **Git 规范：** 功能分支开发，小步提交，合并回 master
-- **会话结束前必须：** `git push -u origin HEAD` + `gh pr create` 推送并创建 PR，返回 PR 链接
+- **会话结束前必须：** `git push -u origin HEAD` + `gh pr create` + `gh pr merge` 完成推送、建 PR、合入
 - **Shell 环境：** Windows PowerShell，不支持 `&&`（用 `;`）、不支持 `\` 续行、不支持 `<<EOF` heredoc
 - **总目标：** 210 个功能全部通过的生产级应用
 - **本次目标：** 完整实现一个用户故事，覆盖涉及的所有层
