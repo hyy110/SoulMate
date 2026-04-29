@@ -169,6 +169,16 @@ export default function Explore() {
     return characters.filter((c) => c.relationship_type === activeTab);
   }, [characters, activeTab]);
 
+  const hotTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    characters.forEach((c) => {
+      (c.tags || []).forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1));
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+  }, [characters]);
+
   const handleChat = useCallback(
     async (characterId: string) => {
       setChatLoading(characterId);
@@ -223,7 +233,7 @@ export default function Explore() {
             className={clsx(
               'flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-all',
               activeTab === tab.key
-                ? 'bg-gradient-to-r from-primary-600 to-pink-500 text-white shadow-md shadow-primary-600/25'
+                ? 'bg-gradient-to-r from-primary-600 to-pink-500 text-white shadow-md shadow-primary-600/25 ring-2 ring-primary-200 dark:ring-primary-900'
                 : 'bg-gray-100 text-text-light-secondary hover:bg-gray-200 dark:bg-gray-800 dark:text-text-dark-secondary dark:hover:bg-gray-700',
             )}
           >
@@ -232,15 +242,30 @@ export default function Explore() {
         ))}
       </div>
 
+      {hotTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-text-light-secondary dark:text-text-dark-secondary">热门标签：</span>
+          {hotTags.map(([tag, count]) => (
+            <button
+              key={tag}
+              onClick={() => setSearchQuery(tag)}
+              className="rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-xs text-primary-700 transition-colors hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/20 dark:text-primary-300"
+            >
+              {tag} · {count}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Grid */}
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="card flex flex-col items-center">
-              <div className="mb-3 h-20 w-20 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
-              <div className="h-5 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="mt-2 h-4 w-36 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="mt-4 h-9 w-full animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700" />
+              <div className="shimmer mb-3 h-20 w-20 rounded-full" />
+              <div className="shimmer h-5 w-24 rounded" />
+              <div className="shimmer mt-2 h-4 w-36 rounded" />
+              <div className="shimmer mt-4 h-9 w-full rounded-xl" />
             </div>
           ))}
         </div>
@@ -255,7 +280,7 @@ export default function Explore() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredCharacters.map((char) => (
               <ExploreCard
                 key={char.id}
