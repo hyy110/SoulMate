@@ -7,7 +7,17 @@ export interface Message {
   content: string;
   audio_url: string | null;
   token_count: number | null;
+  metadata_json?: {
+    tool_events?: ToolEvent[];
+  } | null;
   created_at: string;
+}
+
+export interface ToolEvent {
+  tool_id: string;
+  tool_name: string;
+  args: Record<string, unknown>;
+  result: Record<string, unknown> | string;
 }
 
 export interface Conversation {
@@ -31,7 +41,6 @@ export interface SendMessageRequest {
 
 export interface PaginatedMessages {
   items: Message[];
-  total: number;
   has_more: boolean;
 }
 
@@ -59,10 +68,14 @@ export async function deleteConversation(id: string): Promise<void> {
   await apiClient.delete(`/conversations/${id}`);
 }
 
-export async function getMessages(conversationId: string, limit = 50): Promise<PaginatedMessages> {
+export async function getMessages(
+  conversationId: string,
+  limit = 50,
+  before?: string,
+): Promise<PaginatedMessages> {
   const res = await apiClient.get<PaginatedMessages>(
     `/conversations/${conversationId}/messages`,
-    { params: { limit } },
+    { params: { limit, before } },
   );
   return res.data;
 }

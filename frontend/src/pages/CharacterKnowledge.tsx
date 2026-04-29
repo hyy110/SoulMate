@@ -34,6 +34,7 @@ export default function CharacterKnowledge() {
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [reindexing, setReindexing] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const indexedCount = useMemo(
     () => documents.filter((d) => d.status === 'indexed').length,
@@ -89,13 +90,17 @@ export default function CharacterKnowledge() {
     }
   };
 
-  const handleUpload = async (file: File | null) => {
-    if (!file || !knowledgeBase || uploading) return;
+  const handleUploadFiles = async (files: File[]) => {
+    if (!knowledgeBase || uploading || files.length === 0) return;
     setUploading(true);
     try {
-      const doc = await uploadKnowledgeDocument(knowledgeBase.id, file);
-      setDocuments((prev) => [doc, ...prev]);
-      showSuccess(doc.status === 'indexed' ? '文档上传并索引成功' : '文档上传成功，等待处理');
+      const uploadedDocs: KnowledgeDocument[] = [];
+      for (const file of files) {
+        const doc = await uploadKnowledgeDocument(knowledgeBase.id, file);
+        uploadedDocs.push(doc);
+      }
+      setDocuments((prev) => [...uploadedDocs, ...prev]);
+      showSuccess(`已上传 ${uploadedDocs.length} 个文档`);
     } catch (err: any) {
       showError(err?.response?.data?.detail || '上传失败');
     } finally {
@@ -203,15 +208,15 @@ export default function CharacterKnowledge() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="card text-center">
+        <div className="card text-center ring-1 ring-primary-100 dark:ring-primary-900/40">
           <p className="text-2xl font-bold text-primary-600">{documents.length}</p>
           <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">文档数</p>
         </div>
-        <div className="card text-center">
+        <div className="card text-center ring-1 ring-primary-100 dark:ring-primary-900/40">
           <p className="text-2xl font-bold text-primary-600">{indexedCount}</p>
           <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">已索引</p>
         </div>
-        <div className="card text-center">
+        <div className="card text-center ring-1 ring-primary-100 dark:ring-primary-900/40">
           <p className="text-2xl font-bold text-primary-600">{totalChunks}</p>
           <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">分块总数</p>
         </div>
@@ -219,12 +224,33 @@ export default function CharacterKnowledge() {
 
       <section className="card space-y-3">
         <h2 className="text-lg font-semibold">上传文档</h2>
-        <div className="rounded-xl border-2 border-dashed border-border-light p-4 dark:border-border-dark">
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            handleUploadFiles(Array.from(e.dataTransfer.files || []));
+          }}
+          className={`rounded-xl border-2 border-dashed p-5 transition-colors ${
+            dragOver
+              ? 'border-primary-500 bg-primary-50/60 dark:bg-primary-900/20'
+              : 'border-border-light dark:border-border-dark'
+          }`}
+        >
+          <div className="mb-2 flex items-center gap-2 text-sm text-text-light-secondary dark:text-text-dark-secondary">
+            <span>📄</span>
+            <span>拖拽文件到这里，或点击选择（支持多文件）</span>
+          </div>
           <input
             type="file"
             accept={ACCEPTED_TYPES}
+            multiple
             disabled={uploading}
-            onChange={(e) => handleUpload(e.target.files?.[0] || null)}
+            onChange={(e) => handleUploadFiles(Array.from(e.target.files || []))}
             className="block w-full text-sm"
           />
           <p className="mt-2 text-xs text-text-light-secondary dark:text-text-dark-secondary">

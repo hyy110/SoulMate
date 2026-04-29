@@ -253,6 +253,7 @@ export default function VoiceProfiles() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioSource, setAudioSource] = useState<'upload' | 'record'>('upload');
   const [previewText, setPreviewText] = useState('你好，很高兴认识你。');
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentObjectUrlRef = useRef<string | null>(null);
@@ -281,6 +282,24 @@ export default function VoiceProfiles() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!audioFile) {
+      setAudioPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+    const url = URL.createObjectURL(audioFile);
+    setAudioPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return url;
+    });
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [audioFile]);
 
   const presetVoices = useMemo(
     () => voices.filter((voice) => voice.is_preset || voice.voice_type === 'preset'),
@@ -546,6 +565,24 @@ export default function VoiceProfiles() {
             </div>
           ) : (
             <MicRecorder onRecorded={(file) => setAudioFile(file)} />
+          )}
+
+          {audioPreviewUrl && (
+            <div className="mt-3 rounded-xl border border-border-light bg-gradient-to-r from-primary-50 to-pink-50 p-3 dark:border-border-dark dark:from-primary-900/20 dark:to-pink-900/20">
+              <p className="mb-2 text-xs font-medium text-text-light-secondary dark:text-text-dark-secondary">
+                音频波形预览
+              </p>
+              <div className="mb-2 flex h-12 items-end gap-1">
+                {Array.from({ length: 36 }).map((_, idx) => (
+                  <span
+                    key={idx}
+                    className="w-1 rounded-full bg-gradient-to-t from-primary-600 to-pink-500"
+                    style={{ height: `${8 + ((idx * 7) % 32)}px`, opacity: 0.45 + ((idx % 5) * 0.1) }}
+                  />
+                ))}
+              </div>
+              <audio src={audioPreviewUrl} controls className="w-full" />
+            </div>
           )}
         </div>
 

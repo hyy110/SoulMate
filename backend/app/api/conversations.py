@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -12,6 +13,7 @@ from app.models.character import Character
 from app.models.conversation import Conversation
 from app.models.knowledge_base import KnowledgeBase
 from app.models.message import Message
+from app.models.tool import Tool
 from app.models.user import User
 from app.security import get_current_user
 from app.services.rag_service import rag_service
@@ -36,6 +38,7 @@ class MessageResponse(BaseModel):
     content: str
     audio_url: Optional[str] = None
     token_count: Optional[int] = None
+    metadata_json: Optional[dict] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -56,6 +59,13 @@ class ConversationResponse(BaseModel):
 
 class MessageSend(BaseModel):
     content: str = Field(..., min_length=1, max_length=5000)
+
+
+class ToolEvent(BaseModel):
+    tool_id: str
+    tool_name: str
+    args: dict
+    result: dict | str
 
 
 class MessageListResponse(BaseModel):
@@ -92,6 +102,78 @@ def _get_own_conversation(
     if conv.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="无权访问此对话")
     return conv
+
+
+def _try_extract_city(content: str) -> str:
+    match = re.search(r"([一-龥]{2,8})(?:天气|气温)", content)
+    if match:
+        return match.group(1)
+    return "北京"
+
+
+def _try_extract_math_expression(content: str) -> str | None:
+    normalized = (
+        content.replace("乘以", "*")
+        .replace("乘", "*")
+        .replace("除以", "/")
+        .replace("除", "/")
+        .replace("加", "+")
+        .replace("减", "-")
+        .replace("x", "*")
+        .replace("X", "*")
+        .replace("（", "(")
+        .replace("）", ")")
+        .replace(" ", "")
+    )
+    match = re.search(r"([0-9\.\+\-\*\/\(\)]+)", normalized)
+    if not match:
+        return None
+    expr = match.group(1)
+    if any(ch.isalpha() for ch in expr):
+        return None
+    return expr
+
+
+def _eval_safe_expression(expr: str) -> str:
+    if not re.fullmatch(r"[0-9\.\+\-\*\/\(\)]+", expr):
+        return "表达式不合法"
+    try:
+        value = eval(expr, {"__builtins__": {}}, {})
+        return str(value)
+    except Exception:
+        return "计算失败"
+
+
+def _call_builtin_tool(tool_name: str, content: str) -> tuple[dict, str] | None:
+    lower_name = tool_name.lower()
+    lower_content = content.lower()
+
+    if "天气" in tool_name or "weather" in lower_name:
+        city = _try_extract_city(content)
+        fake_weather = {
+            "city": city,
+            "condition": "晴",
+            "temperature_c": 26,
+            "humidity": 48,
+        }
+        summary = f"{city}当前晴，气温26°C，湿度48%。"
+        return fake_weather, summary
+
+    if "计算" in tool_name or "calculator" in lower_name:
+        expr = _try_extract_math_expression(content)
+        if not expr:
+            return {"error": "未识别到可计算表达式"}, "我没识别到可计算的表达式。"
+        result = _eval_safe_expression(expr)
+        return {"expression": expr, "result": result}, f"计算结果：{expr} = {result}"
+
+    if "时间" in tool_name or "日期" in tool_name or "datetime" in lower_name or "time" in lower_name:
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return {"current_time": now_str, "timezone": "Asia/Shanghai"}, f"现在时间是 {now_str}（Asia/Shanghai）"
+
+    if any(k in lower_content for k in ["weather", "天气"]) and "builtin-weather" in lower_name:
+        city = _try_extract_city(content)
+        return {"city": city, "condition": "晴", "temperature_c": 26}, f"{city}当前晴，气温26°C。"
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -258,10 +340,44 @@ def send_message(
                 snippets = "；".join(hit["content"][:80] for hit in hits)
                 knowledge_hint = f"（参考知识库：{snippets}）"
 
+    bound_tools = []
+    if character:
+        bound_tools = (
+            db.query(Tool)
+            .filter(Tool.character_id == character.id, Tool.is_enabled.is_(True))
+            .all()
+        )
+    tool_events: list[ToolEvent] = []
+    tool_summaries: list[str] = []
+    for tool in bound_tools:
+        result = _call_builtin_tool(tool.name, body.content)
+        if not result:
+            continue
+        tool_result, summary = result
+        tool_events.append(
+            ToolEvent(
+                tool_id=str(tool.id),
+                tool_name=tool.name,
+                args={"content": body.content},
+                result=tool_result,
+            )
+        )
+        tool_summaries.append(summary)
+
+    tool_hint = ""
+    if tool_summaries:
+        tool_hint = "；".join(tool_summaries)
+        tool_hint = f"（工具结果：{tool_hint}）"
+
     ai_reply = Message(
         conversation_id=conv.id,
         role="assistant",
-        content=f"我是{char_name}，你说的是：{body.content}{knowledge_hint}",
+        content=f"我是{char_name}，你说的是：{body.content}{knowledge_hint}{tool_hint}",
+        metadata_json={
+            "tool_events": [event.model_dump() for event in tool_events],
+        }
+        if tool_events
+        else None,
     )
     db.add(ai_reply)
 

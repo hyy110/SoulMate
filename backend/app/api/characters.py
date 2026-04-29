@@ -432,9 +432,11 @@ def get_character_tools(
         raise HTTPException(status_code=403, detail="无权访问")
 
     tools = db.query(Tool).filter(Tool.character_id == character.id).all()
+    from app.api.tools import BUILTIN_TOOLS
+    builtin_name_to_id = {tool["name"]: tool["id"] for tool in BUILTIN_TOOLS}
     return [
         {
-            "id": str(t.id),
+            "id": builtin_name_to_id.get(t.name, str(t.id)) if t.tool_type == "builtin" else str(t.id),
             "name": t.name,
             "description": t.description,
             "tool_type": t.tool_type,
@@ -492,9 +494,10 @@ def bind_character_tools(
 
     db.commit()
     tools = db.query(Tool).filter(Tool.character_id == character.id).all()
+    builtin_name_to_id = {tool["name"]: tool["id"] for tool in BUILTIN_TOOLS}
     return [
         {
-            "id": str(t.id),
+            "id": builtin_name_to_id.get(t.name, str(t.id)) if t.tool_type == "builtin" else str(t.id),
             "name": t.name,
             "description": t.description,
             "tool_type": t.tool_type,

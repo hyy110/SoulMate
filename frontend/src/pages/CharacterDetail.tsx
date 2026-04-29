@@ -125,6 +125,14 @@ export default function CharacterDetail() {
     <div className="space-y-6 pb-8">
       {/* Cover/Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-primary p-8 text-white">
+        {character.cover_image_url && (
+          <img
+            src={character.cover_image_url}
+            alt={`${character.name} 封面`}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/25" />
         <div className="relative z-10 flex items-center gap-6">
           <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-full bg-white/20 text-4xl font-bold backdrop-blur">
             {character.avatar_url ? (
@@ -227,6 +235,9 @@ export default function CharacterDetail() {
             </button>
             <Link to={`/character/${character.id}/knowledge`} className="btn-secondary">
               知识库
+            </Link>
+            <Link to={`/character/${character.id}/tools`} className="btn-secondary">
+              工具
             </Link>
             <button
               onClick={() => setShowDeleteConfirm(true)}

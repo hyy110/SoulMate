@@ -84,4 +84,15 @@
   .gradient-text {
     @apply bg-gradient-primary bg-clip-text text-transparent;
   }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.18) 0%,
+      rgba(148, 163, 184, 0.35) 50%,
+      rgba(148, 163, 184, 0.18) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
 }

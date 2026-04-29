@@ -11,6 +11,13 @@ const navLinks = [
   { to: '/character/create', label: '创建角色' },
 ];
 
+const mobileTabs = [
+  { to: '/', label: '首页', icon: '🏠' },
+  { to: '/explore', label: '发现', icon: '🔍' },
+  { to: '/character/create', label: '创建', icon: '➕' },
+  { to: '/profile', label: '我的', icon: '👤' },
+];
+
 const sidebarLinks = [
   { to: '/', label: '首页' },
   { to: '/explore', label: '发现角色' },
@@ -268,12 +275,37 @@ export default function MainLayout() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">
           <div className="mx-auto max-w-5xl">
-            <Outlet />
+            <div className="animate-fade-in">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-light bg-surface-light/95 px-2 py-2 backdrop-blur md:hidden dark:border-border-dark dark:bg-surface-dark/95">
+        <div className="grid grid-cols-4 gap-1">
+          {mobileTabs.map((tab) => {
+            const active = location.pathname === tab.to;
+            return (
+              <Link
+                key={tab.to}
+                to={tab.to}
+                className={clsx(
+                  'flex flex-col items-center justify-center rounded-xl py-1.5 text-xs transition-colors',
+                  active
+                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300'
+                    : 'text-text-light-secondary dark:text-text-dark-secondary',
+                )}
+              >
+                <span className="text-base">{tab.icon}</span>
+                <span>{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
