@@ -519,3 +519,79 @@
 
 ### 当前进度
 135/210 tests passing
+
+---
+
+## 会话 8 — 知识库 RAG 用户故事打通 (2026-04-29)
+
+### 用户故事：知识库管理 + 文档检索增强对话（后端 API + 服务层 + 前端页面）
+
+### 本次完成的工作
+
+1. **后端 Knowledge API 从占位到可用 (`app/api/knowledge.py`)**
+   - POST `/api/characters/:id/knowledge-base`：创建角色知识库并绑定角色
+   - GET `/api/characters/:id/knowledge-base`：查询角色知识库
+   - DELETE `/api/characters/:id/knowledge-base`：删除知识库并解绑角色
+   - GET `/api/knowledge-bases/:id/documents`：文档列表
+   - POST `/api/knowledge-bases/:id/documents`：上传文档并触发索引
+   - DELETE `/api/knowledge-bases/:id/documents/:did`：删除文档
+   - POST `/api/knowledge-bases/:id/reindex`：重建索引
+   - GET `/api/knowledge-bases/:id/search?q=`：知识库检索
+   - 增加权限校验、文件类型/大小校验、错误处理
+
+2. **RAG 服务实现 (`app/services/rag_service.py`)**
+   - 实现 TXT/MD/PDF/DOCX 文档解析（PDF/DOCX 为可选依赖模式）
+   - 实现文本分块（chunk_size/chunk_overlap）
+   - 实现轻量检索逻辑（基于 token overlap 的 top-k 检索）
+   - 索引结果写入 `documents.metadata_json`，用于后续检索与重建
+
+3. **Schema 补全 (`app/schemas/knowledge.py`)**
+   - 增加知识库创建/响应、文档响应、检索结果、重建响应等模型
+
+4. **对话链路接入知识库检索 (`app/api/conversations.py`)**
+   - 发送消息时，如果角色绑定知识库，会检索相关片段
+   - 将检索片段注入 AI 回复文本，实现基础 RAG 增强验证闭环
+
+5. **后端路由注册 (`app/main.py`)**
+   - 将 `knowledge.router` 注册到主应用
+
+6. **前端知识库管理页面 (`frontend/src/pages/CharacterKnowledge.tsx`)**
+   - 新增路由：`/character/:id/knowledge`
+   - 空状态创建知识库
+   - 文档上传、列表、删除
+   - 索引重建按钮
+   - 检索测试面板（展示 chunk 命中结果）
+   - 统计卡片（文档数/已索引数/分块总数）
+
+7. **前端 API 层补齐 (`frontend/src/api/knowledge.ts`)**
+   - 对齐后端新增知识库全部接口
+   - 支持 multipart 文档上传与检索请求
+
+8. **角色详情入口增强 (`frontend/src/pages/CharacterDetail.tsx`)**
+   - 角色作者新增“知识库”入口，直达管理页
+
+### 功能通过情况
+- **142/210 tests passing**（新增 7 个）
+- 创建角色知识库 ✓
+- 上传文档到知识库 ✓
+- 文档处理（解析/分块/索引）✓
+- RAG 增强对话（知识片段注入）✓
+- 删除知识库文档 ✓
+- 重建知识库索引 ✓
+- 知识库管理页面 ✓
+
+### 验证与回归
+- 代码级验证通过：
+  - `python -m compileall backend/app` 通过
+  - 新增/修改文件无 IDE lints 报错
+- 环境阻塞：
+  - 后端运行时本地环境存在 `pydantic_core` 版本不匹配（ImportError），导致无法完成 TestClient 端到端脚本验证
+  - 前端 `npm run build` 仍受历史 TypeScript 配置问题阻塞（`vite.config.ts` 与 `tsconfig.node.json`），本次未修改该历史项
+
+### 下次应该做什么
+1. 修复 Python 依赖冲突（`pydantic` / `pydantic_core`）后执行知识库端到端回归
+2. 完成知识库批量上传、多格式全覆盖（PDF/DOCX 依赖安装与验证）
+3. 继续推进 Function Call 与语音通话未通过项
+
+### 当前进度
+142/210 tests passing

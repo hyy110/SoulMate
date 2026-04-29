@@ -666,7 +666,7 @@
       "步骤 3: 验证返回知识库信息",
       "步骤 4: GET /api/characters/:id/knowledge-base 验证知识库存在"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -679,7 +679,7 @@
       "步骤 5: 上传 TXT 文件，验证同样能处理",
       "步骤 6: 验证知识库 document_count 和 chunk_count 更新"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -691,7 +691,7 @@
       "步骤 4: 验证搜索返回相关的文本片段",
       "步骤 5: 验证返回的片段确实来自上传的文档"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -704,7 +704,7 @@
       "步骤 5: 验证 AI 回复中包含 '2020 年' 的信息",
       "步骤 6: 不使用知识库的角色回答相同问题，验证无法提供该信息"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -715,7 +715,7 @@
       "步骤 3: 验证文档已从列表移除",
       "步骤 4: 搜索之前文档中的内容，验证不再返回结果"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -727,7 +727,7 @@
       "步骤 4: 等待重建完成",
       "步骤 5: 搜索验证索引正常工作"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1095,7 +1095,7 @@
       "步骤 8: 在搜索框测试查询",
       "步骤 9: 验证显示检索到的文本片段"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

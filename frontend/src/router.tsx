@@ -8,6 +8,7 @@ const Explore = lazy(() => import('./pages/Explore'));
 const CharacterCreate = lazy(() => import('./pages/CharacterCreate'));
 const CharacterDetail = lazy(() => import('./pages/CharacterDetail'));
 const CharacterEdit = lazy(() => import('./pages/CharacterEdit'));
+const CharacterKnowledge = lazy(() => import('./pages/CharacterKnowledge'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const VoiceCall = lazy(() => import('./pages/VoiceCall'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -62,6 +63,7 @@ const routes: RouteObject[] = [
       { path: 'character/create', element: <CharacterCreate /> },
       { path: 'character/:id', element: <CharacterDetail /> },
       { path: 'character/:id/edit', element: <CharacterEdit /> },
+      { path: 'character/:id/knowledge', element: <CharacterKnowledge /> },
       { path: 'chat/:conversationId', element: <ChatPage /> },
       { path: 'voice/:conversationId', element: <VoiceCall /> },
       { path: 'profile', element: <Profile /> },
